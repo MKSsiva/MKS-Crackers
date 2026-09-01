@@ -1,17 +1,13 @@
-function App() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100">
-      <div className="bg-white shadow-xl rounded-xl p-10">
-        <h1 className="text-5xl font-bold text-indigo-600">
-          E-Commerce Website
-        </h1>
+import { Routes, Route } from "react-router-dom";
 
-        <p className="mt-3 text-gray-500">
-          React 19 + Vite 7 + Tailwind CSS 4
-        </p>
-      </div>
-    </div>
+import Home from "./pages/Home";
+
+const App = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+    </Routes>
   );
-}
+};
 
 export default App;
