@@ -5,6 +5,7 @@ import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
 
+import homepageRoutes from "./routes/homepageRoutes.js";
 import pool from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
@@ -17,6 +18,7 @@ import cartRoutes from "./routes/cartRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import addressRoutes from "./routes/addressRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+
 
 
 dotenv.config();
@@ -77,6 +79,7 @@ app.use("/api/cart", cartRoutes); // cart
 app.use("/api/wishlist", wishlistRoutes); //wishlist
 app.use("/api/addresses", addressRoutes); //address
 app.use("/api/orders", orderRoutes); //order
+app.use("/api/homepage", homepageRoutes); //homepage
 
 const PORT = process.env.PORT || 5000;
 
