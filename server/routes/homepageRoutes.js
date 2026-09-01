@@ -1,8 +1,15 @@
 import express from "express";
-import { getHomepageFeatures } from "../controllers/homepageController.js";
+
+import {
+  getPublicHomepageFeatures,
+} from "../controllers/homepageController.js";
 
 const router = express.Router();
 
-router.get("/features", getHomepageFeatures);
+// Public homepage features
+router.get(
+  "/features",
+  getPublicHomepageFeatures
+);
 
 export default router;

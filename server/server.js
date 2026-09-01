@@ -6,6 +6,7 @@ import compression from "compression";
 import morgan from "morgan";
 
 import homepageRoutes from "./routes/homepageRoutes.js";
+import adminHomepageRoutes from "./routes/adminHomepageRoutes.js";
 import pool from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
@@ -80,6 +81,7 @@ app.use("/api/wishlist", wishlistRoutes); //wishlist
 app.use("/api/addresses", addressRoutes); //address
 app.use("/api/orders", orderRoutes); //order
 app.use("/api/homepage", homepageRoutes); //homepage
+app.use("/api/admin/homepage", adminHomepageRoutes); // adminHomepage
 
 const PORT = process.env.PORT || 5000;
 

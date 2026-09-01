@@ -1,11 +1,16 @@
 import { Link } from "react-router-dom";
 
-const Hero = () => {
+const Hero = ({
+  features = [],
+  loading = false,
+  error = false,
+}) => {
   return (
     <section className="relative overflow-hidden bg-[#080a18] text-white">
 
       {/* Background glow */}
       <div className="absolute left-1/3 top-10 h-72 w-72 rounded-full bg-red-600/20 blur-3xl" />
+
       <div className="absolute right-10 top-20 h-96 w-96 rounded-full bg-purple-600/20 blur-3xl" />
 
       {/* Firework decoration */}
@@ -23,7 +28,10 @@ const Hero = () => {
 
       <div className="relative mx-auto grid min-h-[560px] max-w-7xl items-center gap-10 px-6 py-20 lg:grid-cols-2 lg:px-8">
 
-        {/* Content */}
+        {/* ================================================= */}
+        {/* LEFT CONTENT */}
+        {/* ================================================= */}
+
         <div className="relative z-10">
 
           <p className="mb-4 font-semibold uppercase tracking-[0.3em] text-orange-400">
@@ -31,7 +39,9 @@ const Hero = () => {
           </p>
 
           <h1 className="text-5xl font-black leading-tight md:text-6xl">
+
             Celebrate
+
             <br />
 
             <span className="text-orange-400">
@@ -41,6 +51,7 @@ const Hero = () => {
             <br />
 
             With Joy
+
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-8 text-gray-300">
@@ -48,6 +59,7 @@ const Hero = () => {
             and unforgettable celebration with your family.
           </p>
 
+          {/* Buttons */}
           <div className="mt-8 flex flex-wrap gap-4">
 
             <Link
@@ -66,37 +78,72 @@ const Hero = () => {
 
           </div>
 
-          {/* Benefits */}
-          <div className="mt-10 flex max-w-xl flex-wrap gap-4">
+          {/* ================================================= */}
+          {/* DYNAMIC HOMEPAGE FEATURES */}
+          {/* ================================================= */}
 
-            <div className="rounded-xl border border-white/30 bg-white/5 px-5 py-4">
-              <div className="text-2xl">🛡️</div>
-              <p className="mt-2 font-bold">100% Safe</p>
-              <p className="text-xs text-gray-400">
-                Quality Tested
-              </p>
-            </div>
+          <div className="mt-10">
 
-            <div className="rounded-xl border border-white/30 bg-white/5 px-5 py-4">
-              <div className="text-2xl">🚚</div>
-              <p className="mt-2 font-bold">Fast Delivery</p>
-              <p className="text-xs text-gray-400">
-                Across India
-              </p>
-            </div>
+            {loading && (
+              <div className="flex flex-wrap gap-4">
 
-            <div className="rounded-xl border border-white/30 bg-white/5 px-5 py-4">
-              <div className="text-2xl">🏆</div>
-              <p className="mt-2 font-bold">Best Prices</p>
-              <p className="text-xs text-gray-400">
-                Guaranteed
-              </p>
-            </div>
+                {[1, 2, 3].map((item) => (
+                  <div
+                    key={item}
+                    className="h-24 w-36 animate-pulse rounded-xl border border-white/20 bg-white/5"
+                  />
+                ))}
+
+              </div>
+            )}
+
+            {!loading && error && (
+              <div className="rounded-xl border border-red-400/30 bg-red-500/10 px-5 py-4 text-sm text-red-200">
+                Unable to load homepage features.
+              </div>
+            )}
+
+            {!loading && !error && features.length > 0 && (
+              <div className="flex max-w-2xl flex-wrap gap-4">
+
+                {features.map((feature) => (
+                  <div
+                    key={feature.id}
+                    className="min-w-[150px] flex-1 rounded-xl border border-white/30 bg-white/5 px-5 py-4 backdrop-blur-sm transition hover:-translate-y-1 hover:bg-white/10"
+                  >
+
+                    <div className="text-2xl">
+                      {feature.icon}
+                    </div>
+
+                    <p className="mt-2 font-bold">
+                      {feature.title}
+                    </p>
+
+                    <p className="mt-1 text-xs text-gray-400">
+                      {feature.description}
+                    </p>
+
+                  </div>
+                ))}
+
+              </div>
+            )}
+
+            {!loading && !error && features.length === 0 && (
+              <div className="rounded-xl border border-white/20 bg-white/5 px-5 py-4 text-sm text-gray-400">
+                No homepage features available.
+              </div>
+            )}
 
           </div>
+
         </div>
 
-        {/* Product Showcase */}
+        {/* ================================================= */}
+        {/* RIGHT PRODUCT SHOWCASE */}
+        {/* ================================================= */}
+
         <div className="relative flex min-h-[400px] items-center justify-center">
 
           <div className="absolute h-80 w-80 rounded-full bg-red-500/10 blur-2xl" />
@@ -132,8 +179,11 @@ const Hero = () => {
             </div>
 
           </div>
+
         </div>
+
       </div>
+
     </section>
   );
 };
