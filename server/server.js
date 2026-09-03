@@ -6,7 +6,9 @@ import compression from "compression";
 import morgan from "morgan";
 
 import homepageRoutes from "./routes/homepageRoutes.js";
+import homepageHeroRoutes from "./routes/homepageHeroRoutes.js";
 import adminHomepageRoutes from "./routes/adminHomepageRoutes.js";
+import adminDashboardRoutes from "./routes/adminDashboardRoutes.js";
 import pool from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
@@ -73,6 +75,8 @@ app.use("/api/users", userRoutes);
 // Admin
 app.use("/api/admin", adminRoutes);
 
+app.use("/api/admin/dashboard", adminDashboardRoutes); // adminDashboard
+
 app.use("/api/categories", categoryRoutes); // Category
 app.use("/api/products", productRoutes); // product
 app.use("/api/product-images", productImageRoutes); // productImage
@@ -81,7 +85,9 @@ app.use("/api/wishlist", wishlistRoutes); //wishlist
 app.use("/api/addresses", addressRoutes); //address
 app.use("/api/orders", orderRoutes); //order
 app.use("/api/homepage", homepageRoutes); //homepage
+app.use("/api/homepage", homepageHeroRoutes); // homepageHero
 app.use("/api/admin/homepage", adminHomepageRoutes); // adminHomepage
+
 
 const PORT = process.env.PORT || 5000;
 

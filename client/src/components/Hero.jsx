@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 const Hero = ({
+  hero = null,
   features = [],
   loading = false,
   error = false,
@@ -34,47 +35,59 @@ const Hero = ({
 
         <div className="relative z-10">
 
+          {/* Badge */}
           <p className="mb-4 font-semibold uppercase tracking-[0.3em] text-orange-400">
-            Premium Quality Crackers
+            {hero?.badge || "Premium Quality Crackers"}
           </p>
 
+          {/* Hero Title */}
           <h1 className="text-5xl font-black leading-tight md:text-6xl">
-
-            Celebrate
-
-            <br />
-
-            <span className="text-orange-400">
-              Every Moment
-            </span>
-
-            <br />
-
-            With Joy
-
+            {hero?.title || "Celebrate Every Moment With Joy"}
           </h1>
 
+          {/* Hero Subtitle */}
           <p className="mt-6 max-w-xl text-lg leading-8 text-gray-300">
-            Premium quality crackers for a safe, joyful
-            and unforgettable celebration with your family.
+            {hero?.subtitle ||
+              "Premium quality crackers for a safe, joyful and unforgettable celebration with your family."}
           </p>
 
           {/* Buttons */}
           <div className="mt-8 flex flex-wrap gap-4">
 
-            <Link
-              to="/products"
-              className="rounded-md bg-red-600 px-7 py-3 font-bold transition hover:bg-red-700"
-            >
-              SHOP NOW →
-            </Link>
+            {/* Primary Button */}
+            {hero?.primary_button_link ? (
+              <Link
+                to={hero.primary_button_link}
+                className="rounded-md bg-red-600 px-7 py-3 font-bold transition hover:bg-red-700"
+              >
+                {hero.primary_button_text || "SHOP NOW"} →
+              </Link>
+            ) : (
+              <Link
+                to="/products"
+                className="rounded-md bg-red-600 px-7 py-3 font-bold transition hover:bg-red-700"
+              >
+                SHOP NOW →
+              </Link>
+            )}
 
-            <Link
-              to="/offers"
-              className="rounded-md border border-white/50 px-7 py-3 font-bold transition hover:bg-white hover:text-black"
-            >
-              EXPLORE OFFERS
-            </Link>
+            {/* Secondary Button */}
+            {hero?.secondary_button_link ? (
+              <Link
+                to={hero.secondary_button_link}
+                className="rounded-md border border-white/50 px-7 py-3 font-bold transition hover:bg-white hover:text-black"
+              >
+                {hero.secondary_button_text ||
+                  "EXPLORE OFFERS"}
+              </Link>
+            ) : (
+              <Link
+                to="/offers"
+                className="rounded-md border border-white/50 px-7 py-3 font-bold transition hover:bg-white hover:text-black"
+              >
+                EXPLORE OFFERS
+              </Link>
+            )}
 
           </div>
 
@@ -103,38 +116,42 @@ const Hero = ({
               </div>
             )}
 
-            {!loading && !error && features.length > 0 && (
-              <div className="flex max-w-2xl flex-wrap gap-4">
+            {!loading &&
+              !error &&
+              features.length > 0 && (
+                <div className="flex max-w-2xl flex-wrap gap-4">
 
-                {features.map((feature) => (
-                  <div
-                    key={feature.id}
-                    className="min-w-[150px] flex-1 rounded-xl border border-white/30 bg-white/5 px-5 py-4 backdrop-blur-sm transition hover:-translate-y-1 hover:bg-white/10"
-                  >
+                  {features.map((feature) => (
+                    <div
+                      key={feature.id}
+                      className="min-w-[150px] flex-1 rounded-xl border border-white/30 bg-white/5 px-5 py-4 backdrop-blur-sm transition hover:-translate-y-1 hover:bg-white/10"
+                    >
 
-                    <div className="text-2xl">
-                      {feature.icon}
+                      <div className="text-2xl">
+                        {feature.icon}
+                      </div>
+
+                      <p className="mt-2 font-bold">
+                        {feature.title}
+                      </p>
+
+                      <p className="mt-1 text-xs text-gray-400">
+                        {feature.description}
+                      </p>
+
                     </div>
+                  ))}
 
-                    <p className="mt-2 font-bold">
-                      {feature.title}
-                    </p>
+                </div>
+              )}
 
-                    <p className="mt-1 text-xs text-gray-400">
-                      {feature.description}
-                    </p>
-
-                  </div>
-                ))}
-
-              </div>
-            )}
-
-            {!loading && !error && features.length === 0 && (
-              <div className="rounded-xl border border-white/20 bg-white/5 px-5 py-4 text-sm text-gray-400">
-                No homepage features available.
-              </div>
-            )}
+            {!loading &&
+              !error &&
+              features.length === 0 && (
+                <div className="rounded-xl border border-white/20 bg-white/5 px-5 py-4 text-sm text-gray-400">
+                  No homepage features available.
+                </div>
+              )}
 
           </div>
 

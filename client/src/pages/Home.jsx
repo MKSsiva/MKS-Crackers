@@ -7,70 +7,133 @@ import ProductSection from "../components/ProductSection";
 import PromoBanner from "../components/PromoBanner";
 import Footer from "../components/Footer";
 
-import { getHomepageFeatures } from "../services/api";
+import {
+  getHomepageFeatures,
+  getHomepageHero,
+} from "../services/api";
 
 const Home = () => {
+  // =====================================================
+  // HERO
+  // =====================================================
+
+  const [hero, setHero] = useState(null);
+  const [heroLoading, setHeroLoading] = useState(true);
+  const [heroError, setHeroError] = useState(false);
+
+  // =====================================================
+  // HOMEPAGE FEATURES
+  // =====================================================
+
   const [features, setFeatures] = useState([]);
-  const [featuresLoading, setFeaturesLoading] = useState(true);
-  const [featuresError, setFeaturesError] = useState(false);
+  const [featuresLoading, setFeaturesLoading] =
+    useState(true);
+  const [featuresError, setFeaturesError] =
+    useState(false);
+
+  // =====================================================
+  // LOAD HOMEPAGE DATA
+  // =====================================================
 
   useEffect(() => {
-    const loadFeatures = async () => {
+    const loadHomepage = async () => {
       try {
+        setHeroLoading(true);
         setFeaturesLoading(true);
+
+        setHeroError(false);
         setFeaturesError(false);
 
-        const data = await getHomepageFeatures();
+        const [heroData, featuresData] =
+          await Promise.all([
+            getHomepageHero(),
+            getHomepageFeatures(),
+          ]);
 
-        if (data.success) {
-          setFeatures(data.features || []);
+        // -----------------------------
+        // Hero
+        // -----------------------------
+
+        if (heroData.success && heroData.hero) {
+          setHero(heroData.hero);
+        } else {
+          setHero(null);
+          setHeroError(true);
+        }
+
+        // -----------------------------
+        // Features
+        // -----------------------------
+
+        if (
+          featuresData.success &&
+          Array.isArray(featuresData.features)
+        ) {
+          setFeatures(featuresData.features);
         } else {
           setFeatures([]);
           setFeaturesError(true);
         }
       } catch (error) {
         console.error(
-          "Failed to load homepage features:",
+          "Failed to load homepage:",
           error
         );
 
+        setHero(null);
         setFeatures([]);
+
+        setHeroError(true);
         setFeaturesError(true);
       } finally {
+        setHeroLoading(false);
         setFeaturesLoading(false);
       }
     };
 
-    loadFeatures();
+    loadHomepage();
   }, []);
 
   return (
     <div className="min-h-screen bg-white">
-
       <Header />
 
       <main>
+        {/* =================================================
+            HERO
+        ================================================= */}
 
-        {/* Hero + Dynamic Homepage Features */}
         <Hero
+          hero={hero}
           features={features}
-          loading={featuresLoading}
-          error={featuresError}
+          loading={
+            heroLoading || featuresLoading
+          }
+          error={
+            heroError || featuresError
+          }
         />
 
-        {/* Categories */}
+        {/* =================================================
+            CATEGORIES
+        ================================================= */}
+
         <CategorySection />
 
-        {/* Products */}
+        {/* =================================================
+            PRODUCTS
+        ================================================= */}
+
         <ProductSection />
 
-        {/* Promotional Banner */}
-        <PromoBanner />
+        {/* =================================================
+            PROMOTIONAL BANNER
+        ================================================= */}
 
+        <PromoBanner />
       </main>
 
       <Footer />
-
     </div>
   );
 };

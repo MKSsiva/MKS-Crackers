@@ -67,4 +67,36 @@ export const deleteHomepageFeature = async (id) => {
   return response.data;
 };
 
+export const getAdminDashboardStats = async () => {
+  const response = await api.get(
+    "/admin/dashboard/stats"
+  );
+
+  return response.data;
+};
+
+export const getAdminHomepageHero = async () => {
+  const response = await api.get(
+    "/homepage/admin/hero"
+  );
+
+  return response.data;
+};
+
+export const getHomepageHero = async () => {
+  const response = await api.get(
+    "/homepage/hero"
+  );
+
+  return response.data;
+};
+
+export const updateHomepageHero = async (data) => {
+  const response = await api.put(
+    "/homepage/admin/hero",
+    data
+  );
+
+  return response.data;
+};
 export default api;
