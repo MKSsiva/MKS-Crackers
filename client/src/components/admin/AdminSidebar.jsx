@@ -10,6 +10,7 @@ const AdminSidebar = () => {
   const menuItems = [
     { name: "Dashboard", path: "/admin", icon: "📊", },
     { name: "Hero", path: "/admin/homepage/hero", icon: "🖼️" },
+    { name: "Promo Banner", path: "/admin/homepage/promo", icon: "🎁" },
     { name: "Homepage Features", path: "/admin/homepage/features", icon: "⭐", },
     { name: "Categories", path: "/admin/categories", icon: "📂", },
     { name: "Products", path: "/admin/products", icon: "🎆", },

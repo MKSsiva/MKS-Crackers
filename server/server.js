@@ -7,6 +7,7 @@ import morgan from "morgan";
 
 import homepageRoutes from "./routes/homepageRoutes.js";
 import homepageHeroRoutes from "./routes/homepageHeroRoutes.js";
+import homepagePromoRoutes from "./routes/homepagePromoRoutes.js";
 import adminHomepageRoutes from "./routes/adminHomepageRoutes.js";
 import adminDashboardRoutes from "./routes/adminDashboardRoutes.js";
 import pool from "./config/db.js";
@@ -86,6 +87,7 @@ app.use("/api/addresses", addressRoutes); //address
 app.use("/api/orders", orderRoutes); //order
 app.use("/api/homepage", homepageRoutes); //homepage
 app.use("/api/homepage", homepageHeroRoutes); // homepageHero
+app.use("/api/homepage", homepagePromoRoutes); // homepagePromo
 app.use("/api/admin/homepage", adminHomepageRoutes); // adminHomepage
 
 

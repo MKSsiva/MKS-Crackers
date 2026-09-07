@@ -60,6 +60,7 @@ export const storeCategory = async (req, res) => {
       description,
       image,
       status,
+      sort_order,
     } = req.body;
 
     if (!name || !slug) {
@@ -84,6 +85,7 @@ export const storeCategory = async (req, res) => {
       description,
       image,
       status,
+      sort_order,
     });
 
     const category = await getCategoryById(id);
@@ -113,6 +115,7 @@ export const editCategory = async (req, res) => {
       description,
       image,
       status,
+      sort_order,
     } = req.body;
 
     if (!name || !slug) {
@@ -146,6 +149,7 @@ export const editCategory = async (req, res) => {
       description,
       image,
       status,
+      sort_order,
     });
 
     const updatedCategory = await getCategoryById(id);

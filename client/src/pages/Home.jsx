@@ -10,49 +10,46 @@ import Footer from "../components/Footer";
 import {
   getHomepageFeatures,
   getHomepageHero,
+  getHomepagePromo,
 } from "../services/api";
 
 const Home = () => {
-  // =====================================================
-  // HERO
-  // =====================================================
-
   const [hero, setHero] = useState(null);
   const [heroLoading, setHeroLoading] = useState(true);
   const [heroError, setHeroError] = useState(false);
 
-  // =====================================================
-  // HOMEPAGE FEATURES
-  // =====================================================
-
   const [features, setFeatures] = useState([]);
-  const [featuresLoading, setFeaturesLoading] =
-    useState(true);
-  const [featuresError, setFeaturesError] =
-    useState(false);
+  const [featuresLoading, setFeaturesLoading] = useState(true);
+  const [featuresError, setFeaturesError] = useState(false);
 
-  // =====================================================
-  // LOAD HOMEPAGE DATA
-  // =====================================================
+  const [promo, setPromo] = useState(null);
+  const [promoLoading, setPromoLoading] = useState(true);
+  const [promoError, setPromoError] = useState(false);
 
   useEffect(() => {
     const loadHomepage = async () => {
       try {
         setHeroLoading(true);
         setFeaturesLoading(true);
+        setPromoLoading(true);
 
         setHeroError(false);
         setFeaturesError(false);
+        setPromoError(false);
 
-        const [heroData, featuresData] =
-          await Promise.all([
-            getHomepageHero(),
-            getHomepageFeatures(),
-          ]);
+        const [
+          heroData,
+          featuresData,
+          promoData,
+        ] = await Promise.all([
+          getHomepageHero(),
+          getHomepageFeatures(),
+          getHomepagePromo(),
+        ]);
 
-        // -----------------------------
-        // Hero
-        // -----------------------------
+        // =============================================
+        // HERO
+        // =============================================
 
         if (heroData.success && heroData.hero) {
           setHero(heroData.hero);
@@ -61,9 +58,9 @@ const Home = () => {
           setHeroError(true);
         }
 
-        // -----------------------------
-        // Features
-        // -----------------------------
+        // =============================================
+        // HOMEPAGE FEATURES
+        // =============================================
 
         if (
           featuresData.success &&
@@ -74,6 +71,20 @@ const Home = () => {
           setFeatures([]);
           setFeaturesError(true);
         }
+
+        // =============================================
+        // PROMO BANNER
+        // =============================================
+
+        if (
+          promoData.success &&
+          promoData.promo
+        ) {
+          setPromo(promoData.promo);
+        } else {
+          setPromo(null);
+          setPromoError(true);
+        }
       } catch (error) {
         console.error(
           "Failed to load homepage:",
@@ -82,12 +93,15 @@ const Home = () => {
 
         setHero(null);
         setFeatures([]);
+        setPromo(null);
 
         setHeroError(true);
         setFeaturesError(true);
+        setPromoError(true);
       } finally {
         setHeroLoading(false);
         setFeaturesLoading(false);
+        setPromoLoading(false);
       }
     };
 
@@ -99,9 +113,9 @@ const Home = () => {
       <Header />
 
       <main>
-        {/* =================================================
+        {/* =========================================
             HERO
-        ================================================= */}
+        ========================================= */}
 
         <Hero
           hero={hero}
@@ -114,23 +128,27 @@ const Home = () => {
           }
         />
 
-        {/* =================================================
+        {/* =========================================
             CATEGORIES
-        ================================================= */}
+        ========================================= */}
 
         <CategorySection />
 
-        {/* =================================================
+        {/* =========================================
             PRODUCTS
-        ================================================= */}
+        ========================================= */}
 
         <ProductSection />
 
-        {/* =================================================
-            PROMOTIONAL BANNER
-        ================================================= */}
+        {/* =========================================
+            PROMO BANNER
+        ========================================= */}
 
-        <PromoBanner />
+        <PromoBanner
+          promo={promo}
+          loading={promoLoading}
+          error={promoError}
+        />
       </main>
 
       <Footer />
@@ -139,3 +157,4 @@ const Home = () => {
 };
 
 export default Home;
+
