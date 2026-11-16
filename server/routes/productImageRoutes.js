@@ -1,3 +1,4 @@
+
 import express from "express";
 
 import {
@@ -14,36 +15,38 @@ import {
   requireAdmin,
 } from "../middleware/authMiddleware.js";
 
+import { mutationLimiter } from "../middleware/rateLimiters.js";
+
 const router = express.Router();
 
-// Get product images
-router.get(
-  "/product/:productId",
-  getImages
-);
+// Public: view product images
+router.get("/product/:productId", getImages);
 
-// Admin upload
+// Admin: upload product image
 router.post(
   "/product/:productId",
   verifyToken,
   requireAdmin,
+  mutationLimiter,
   upload.single("image"),
   uploadProductImage
 );
 
-// Admin set primary image
+// Admin: set primary image
 router.put(
   "/:productId/:imageId/primary",
   verifyToken,
   requireAdmin,
+  mutationLimiter,
   makePrimaryImage
 );
 
-// Admin delete image
+// Admin: delete product image
 router.delete(
   "/:imageId",
   verifyToken,
   requireAdmin,
+  mutationLimiter,
   removeProductImage
 );
 

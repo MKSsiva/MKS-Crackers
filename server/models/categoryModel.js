@@ -9,10 +9,11 @@ export const getAllCategories = async () => {
       description,
       image,
       status,
+      sort_order,
       created_at,
       updated_at
     FROM categories
-    ORDER BY id DESC
+    ORDER BY sort_order ASC, id ASC
   `);
 
   return rows;
@@ -28,6 +29,7 @@ export const getCategoryById = async (id) => {
       description,
       image,
       status,
+      sort_order,
       created_at,
       updated_at
     FROM categories
@@ -60,12 +62,20 @@ export const createCategory = async ({
   description,
   image,
   status,
+  sort_order,
 }) => {
   const [result] = await pool.query(
     `
     INSERT INTO categories
-      (name, slug, description, image, status)
-    VALUES (?, ?, ?, ?, ?)
+      (
+        name,
+        slug,
+        description,
+        image,
+        status,
+        sort_order
+      )
+    VALUES (?, ?, ?, ?, ?, ?)
     `,
     [
       name,
@@ -73,6 +83,7 @@ export const createCategory = async ({
       description || null,
       image || null,
       status || "active",
+      Number(sort_order) || 0,
     ]
   );
 
@@ -87,6 +98,7 @@ export const updateCategory = async (
     description,
     image,
     status,
+    sort_order,
   }
 ) => {
   const [result] = await pool.query(
@@ -98,6 +110,7 @@ export const updateCategory = async (
       description = ?,
       image = ?,
       status = ?,
+      sort_order = ?,
       updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
     `,
@@ -107,6 +120,7 @@ export const updateCategory = async (
       description || null,
       image || null,
       status || "active",
+      Number(sort_order) || 0,
       id,
     ]
   );

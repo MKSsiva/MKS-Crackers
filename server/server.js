@@ -4,7 +4,13 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
+import { rateLimit } from "express-rate-limit";
 
+import homepageRoutes from "./routes/homepageRoutes.js";
+import homepageHeroRoutes from "./routes/homepageHeroRoutes.js";
+import homepagePromoRoutes from "./routes/homepagePromoRoutes.js";
+import adminHomepageRoutes from "./routes/adminHomepageRoutes.js";
+import adminDashboardRoutes from "./routes/adminDashboardRoutes.js";
 import pool from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
@@ -19,9 +25,28 @@ import addressRoutes from "./routes/addressRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 
 
+
 dotenv.config();
 
 const app = express();
+
+// ==========================================
+// GLOBAL API RATE LIMITING
+// ==========================================
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 300,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many requests. Please try again later.",
+  },
+});
+
+// Apply rate limiting to all API endpoints
+app.use("/api", apiLimiter);
 
 // Middleware
 app.use(cors());
@@ -70,6 +95,8 @@ app.use("/api/users", userRoutes);
 // Admin
 app.use("/api/admin", adminRoutes);
 
+app.use("/api/admin/dashboard", adminDashboardRoutes); // adminDashboard
+
 app.use("/api/categories", categoryRoutes); // Category
 app.use("/api/products", productRoutes); // product
 app.use("/api/product-images", productImageRoutes); // productImage
@@ -77,6 +104,11 @@ app.use("/api/cart", cartRoutes); // cart
 app.use("/api/wishlist", wishlistRoutes); //wishlist
 app.use("/api/addresses", addressRoutes); //address
 app.use("/api/orders", orderRoutes); //order
+app.use("/api/homepage", homepageRoutes); //homepage
+app.use("/api/homepage", homepageHeroRoutes); // homepageHero
+app.use("/api/homepage", homepagePromoRoutes); // homepagePromo
+app.use("/api/admin/homepage", adminHomepageRoutes); // adminHomepage
+
 
 const PORT = process.env.PORT || 5000;
 

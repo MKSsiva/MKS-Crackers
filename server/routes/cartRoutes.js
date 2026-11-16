@@ -1,3 +1,4 @@
+
 import express from "express";
 
 import {
@@ -9,20 +10,26 @@ import {
 } from "../controllers/cartController.js";
 
 import { verifyToken } from "../middleware/authMiddleware.js";
+import { mutationLimiter } from "../middleware/rateLimiters.js";
 
 const router = express.Router();
 
-// Customer authentication required
+// All cart operations require customer authentication
 router.use(verifyToken);
 
-router.post("/", addToCart);
+// Add product to cart
+router.post("/", mutationLimiter, addToCart);
 
+// View cart
 router.get("/", getCart);
 
-router.put("/:id", updateCart);
+// Update cart quantity
+router.put("/:id", mutationLimiter, updateCart);
 
-router.delete("/:id", removeFromCart);
+// Remove item from cart
+router.delete("/:id", mutationLimiter, removeFromCart);
 
-router.delete("/", clearCart);
+// Clear cart
+router.delete("/", mutationLimiter, clearCart);
 
 export default router;

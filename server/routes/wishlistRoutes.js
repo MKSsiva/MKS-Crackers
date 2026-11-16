@@ -1,3 +1,4 @@
+
 import express from "express";
 
 import {
@@ -8,18 +9,23 @@ import {
 } from "../controllers/wishlistController.js";
 
 import { verifyToken } from "../middleware/authMiddleware.js";
+import { mutationLimiter } from "../middleware/rateLimiters.js";
 
 const router = express.Router();
 
-// All wishlist operations require login
+// All wishlist operations require customer authentication
 router.use(verifyToken);
 
-router.post("/", addToWishlist);
+// Add product to wishlist
+router.post("/", mutationLimiter, addToWishlist);
 
+// View wishlist
 router.get("/", getWishlist);
 
-router.delete("/:product_id", removeFromWishlist);
+// Remove product from wishlist
+router.delete("/:product_id", mutationLimiter, removeFromWishlist);
 
-router.delete("/", clearWishlist);
+// Clear wishlist
+router.delete("/", mutationLimiter, clearWishlist);
 
 export default router;

@@ -1,4 +1,5 @@
 import express from "express";
+import { sensitiveActionLimiter } from "../middleware/rateLimiters.js";
 
 import {
   submitUpiPayment,
@@ -29,7 +30,7 @@ router.use(verifyToken);
 // =====================================================
 
 // Submit UPI payment / UTR
-router.post("/upi/submit", submitUpiPayment);
+router.post("/upi/submit", sensitiveActionLimiter,submitUpiPayment);
 
 // Get logged-in user's payments
 router.get("/my", getMyPayments);
@@ -66,6 +67,7 @@ router.get(
 router.put(
   "/admin/:id/verify",
   requireAdmin,
+  sensitiveActionLimiter,
   verifyUpiPayment
 );
 
