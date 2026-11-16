@@ -21,6 +21,36 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Automatically handle expired or invalid JWT tokens
+api.interceptors.response.use(
+  (response) => response,
+
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear the expired session
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      // Notify AuthContext
+      window.dispatchEvent(
+        new Event("auth:expired")
+      );
+
+      // Redirect protected admin pages to login
+      const currentPath = window.location.pathname;
+
+      if (
+        currentPath.startsWith("/admin") &&
+        currentPath !== "/admin/login"
+      ) {
+        window.location.assign("/admin/login");
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 // =====================================================
 // PUBLIC HOMEPAGE
 // =====================================================

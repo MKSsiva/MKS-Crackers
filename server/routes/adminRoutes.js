@@ -1,6 +1,7 @@
 import express from "express";
+import { authLimiter } from "../middleware/rateLimiters.js";
 import {
-  adminLogin,
+  adminLogin,changeAdminPassword,
 } from "../controllers/adminController.js";
 
 import {
@@ -11,7 +12,15 @@ import {
 const router = express.Router();
 
 // Admin login
-router.post("/login", adminLogin);
+router.post("/login", authLimiter, adminLogin);
+
+// Change admin password
+router.put(
+  "/change-password",
+  verifyToken,
+  requireAdmin,
+  changeAdminPassword
+);
 
 // Protected admin test
 router.get(

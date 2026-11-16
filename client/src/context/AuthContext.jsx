@@ -1,3 +1,4 @@
+
 import {
   createContext,
   useContext,
@@ -13,6 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Restore login session and listen for expired tokens
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -29,6 +31,25 @@ export const AuthProvider = ({ children }) => {
     }
 
     setLoading(false);
+
+    // Handle session expiration from Axios
+    const handleAuthExpired = () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setUser(null);
+    };
+
+    window.addEventListener(
+      "auth:expired",
+      handleAuthExpired
+    );
+
+    return () => {
+      window.removeEventListener(
+        "auth:expired",
+        handleAuthExpired
+      );
+    };
   }, []);
 
   const login = async (email, password) => {

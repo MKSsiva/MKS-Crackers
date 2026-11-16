@@ -7,10 +7,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import HomepageFeatures from "./pages/admin/HomepageFeatures";
+
 import HomepageHero from "./pages/admin/HomepageHero";
 import HomepagePromo from "./pages/admin/HomepagePromo";
 import Categories from "./pages/admin/Categories";
+import FeatureManagement from "./pages/admin/Homepage/FeatureManagement"; 
 const App = () => {
   return (
     <Routes>
@@ -35,8 +36,10 @@ const App = () => {
           <Route path="homepage/hero" element={<HomepageHero />} />
           <Route path="homepage/promo" element={<HomepagePromo />} />
           {/* Homepage */}
-          <Route path="homepage/features" element={<HomepageFeatures />} />
+          
           <Route path="categories" element={<Categories />} />
+          <Route path="/admin/homepage/features"  element={<FeatureManagement />}
+/>
         </Route>
       </Route>
     </Routes>

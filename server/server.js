@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
+import { rateLimit } from "express-rate-limit";
 
 import homepageRoutes from "./routes/homepageRoutes.js";
 import homepageHeroRoutes from "./routes/homepageHeroRoutes.js";
@@ -28,6 +29,24 @@ import orderRoutes from "./routes/orderRoutes.js";
 dotenv.config();
 
 const app = express();
+
+// ==========================================
+// GLOBAL API RATE LIMITING
+// ==========================================
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 300,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many requests. Please try again later.",
+  },
+});
+
+// Apply rate limiting to all API endpoints
+app.use("/api", apiLimiter);
 
 // Middleware
 app.use(cors());
