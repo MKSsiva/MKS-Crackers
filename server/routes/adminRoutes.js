@@ -1,5 +1,5 @@
 import express from "express";
-import { authLimiter } from "../middleware/rateLimiters.js";
+import { authLimiter, sensitiveActionLimiter } from "../middleware/rateLimiters.js";
 import {
   adminLogin,changeAdminPassword,
 } from "../controllers/adminController.js";
@@ -19,6 +19,7 @@ router.put(
   "/change-password",
   verifyToken,
   requireAdmin,
+  sensitiveActionLimiter,
   changeAdminPassword
 );
 

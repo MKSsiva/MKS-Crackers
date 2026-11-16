@@ -1,3 +1,4 @@
+
 import express from "express";
 
 import {
@@ -13,15 +14,17 @@ import {
   requireAdmin,
 } from "../middleware/authMiddleware.js";
 
+import { mutationLimiter } from "../middleware/rateLimiters.js";
+
 const router = express.Router();
 
 // Public
 router.get("/", getAll);
 router.get("/:id", getOne);
 
-// Admin only
-router.post("/", verifyToken, requireAdmin, create);
-router.put("/:id", verifyToken, requireAdmin, update);
-router.delete("/:id", verifyToken, requireAdmin, remove);
+// Admin only — rate-limited write operations
+router.post("/", verifyToken, requireAdmin, mutationLimiter, create);
+router.put("/:id", verifyToken, requireAdmin, mutationLimiter, update);
+router.delete("/:id", verifyToken, requireAdmin, mutationLimiter, remove);
 
 export default router;

@@ -1,3 +1,4 @@
+
 import express from "express";
 
 import {
@@ -10,9 +11,11 @@ import {
 } from "../controllers/addressController.js";
 
 import { verifyToken } from "../middleware/authMiddleware.js";
+import { mutationLimiter } from "../middleware/rateLimiters.js";
 
 const router = express.Router();
 
+// Public test route
 router.get("/test", (req, res) => {
   res.json({
     success: true,
@@ -20,18 +23,25 @@ router.get("/test", (req, res) => {
   });
 });
 
+// All address operations below require authentication
 router.use(verifyToken);
 
-router.post("/", addAddress);
+// Add address
+router.post("/", mutationLimiter, addAddress);
 
+// Get logged-in user's addresses
 router.get("/", getMyAddresses);
 
+// Get a single address
 router.get("/:id", getSingleAddress);
 
-router.put("/:id", editAddress);
+// Update address
+router.put("/:id", mutationLimiter, editAddress);
 
-router.delete("/:id", removeAddress);
+// Delete address
+router.delete("/:id", mutationLimiter, removeAddress);
 
-router.put("/:id/default", makeDefaultAddress);
+// Set default address
+router.put("/:id/default", mutationLimiter, makeDefaultAddress);
 
 export default router;

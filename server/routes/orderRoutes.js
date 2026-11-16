@@ -1,3 +1,4 @@
+
 import express from "express";
 
 import {
@@ -8,9 +9,11 @@ import {
 } from "../controllers/orderController.js";
 
 import { verifyToken } from "../middleware/authMiddleware.js";
+import { sensitiveActionLimiter } from "../middleware/rateLimiters.js";
 
 const router = express.Router();
 
+// Public route test
 router.get("/test", (req, res) => {
   res.json({
     success: true,
@@ -18,14 +21,18 @@ router.get("/test", (req, res) => {
   });
 });
 
+// All customer order operations require authentication
 router.use(verifyToken);
 
-router.post("/checkout", checkout);
+// Checkout: sensitive operation
+router.post("/checkout", sensitiveActionLimiter, checkout);
 
+// View orders
 router.get("/", getMyOrders);
 
 router.get("/:id", getSingleOrder);
 
-router.put("/:id/cancel", cancelMyOrder);
+// Cancel order
+router.put("/:id/cancel", sensitiveActionLimiter, cancelMyOrder);
 
 export default router;
