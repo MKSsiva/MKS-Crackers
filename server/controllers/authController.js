@@ -8,6 +8,10 @@ import {
   updateLastLogin,
 } from "../models/userModel.js";
 
+import {
+  sendWelcomeEmail,
+} from "../services/emailService.js";
+
 export const register = async (req, res) => {
   try {
     const {
@@ -60,7 +64,15 @@ export const register = async (req, res) => {
         expiresIn: process.env.JWT_EXPIRES_IN,
       }
     );
-
+    // Send welcome email after successful registration
+    try {
+      await sendWelcomeEmail({
+        name,
+        email,
+      });
+    } catch (emailError) {
+      console.error("Welcome email could not be sent:", emailError.message);
+    }
     return res.status(201).json({
       success: true,
       message: "Registration successful",

@@ -184,3 +184,5 @@ export const deleteCategory = async (id) => {
   return response.data;
 };
 export default api;
+
+
