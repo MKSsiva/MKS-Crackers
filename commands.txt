@@ -1,0 +1,29 @@
+curl http://localhost:5000/api/products
+sed -n '1,100p' src/pages/Products.jsx
+cd client
+sed -n '1,100p' src/pages/Products.jsx
+cat src/App.jsx
+grep -RInE --exclude-dir=node_modules --exclude-dir=dist 'path="/products"|path="/admin/products"|AdminProducts|pages/admin/Products|pages/Products' src
+git log --oneline --all -- client/src/pages/Products.jsx
+git show HEAD~1:client/src/pages/Products.jsx
+cd ..
+ git log --oneline --all -- client/src/pages/Products.jsx
+git show HEAD~1:client/src/pages/Products.jsx
+cd server
+git log --oneline --all -- client/src/pages/Products.jsx
+git show HEAD~1:client/src/pages/Products.jsx
+cd ..
+cd client
+grep -nE "function Products|function AdminProducts|export default" src/pages/Products.jsx
+grep -nE "function Products|function AdminProducts|export default" src/pages/admin/Products.jsx
+grep -nE 'path="/products"|path="products"' src/App.jsx
+grep -n "services/api" src/pages/Products.jsx src/pages/admin/Products.jsx
+sed -i 's|../../services/api|../services/api|' src/pages/Products.jsx
+cd ..
+cd server
+curl http://localhost:5000/api/products
+cd ..
+for f in client/src/pages/Home.jsx client/src/components/Hero.jsx client/src/components/PromoBanner.jsx client/src/components/CategorySection.jsx client/src/components/ProductSection.jsx client/src/pages/admin/HomepageHero.jsx client/src/pages/admin/HomepagePromo.jsx client/src/pages/admin/Homepage/FeatureManagement.jsx client/src/services/api.js; do echo "========== $f =========="; if [ -f "$f" ]; then cat "$f"; else echo "FILE NOT FOUND"; fi; done
+clear
+for f in client/src/pages/Home.jsx client/src/components/Hero.jsx client/src/components/PromoBanner.jsx client/src/components/CategorySection.jsx client/src/components/ProductSection.jsx client/src/pages/admin/HomepageHero.jsx client/src/pages/admin/HomepagePromo.jsx client/src/pages/admin/Homepage/FeatureManagement.jsx client/src/services/api.js; do echo "========== $f =========="; if [ -f "$f" ]; then cat "$f"; else echo "FILE NOT FOUND"; fi; done
+history -w commands.txt

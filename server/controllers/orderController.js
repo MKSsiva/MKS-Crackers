@@ -1,17 +1,21 @@
+
 import pool from "../config/db.js";
 
 import {
-  createOrder,
-  createOrderItem,
-  getOrdersByUserId,
-  getOrderById,
-  cancelOrder,
-} from "../models/orderModel.js";
+  sendOrderConfirmationEmail,
+} from "../services/emailService.js";
+
+// ==========================================
+// CUSTOMER CHECKOUT
+// ==========================================
 
 export const checkout = async (req, res) => {
-  const connection = await pool.getConnection();
+  let connection;
+  let transactionStarted = false;
 
   try {
+    connection = await pool.getConnection();
+
     const userId = req.user.id;
 
     const {
@@ -20,6 +24,7 @@ export const checkout = async (req, res) => {
       notes,
     } = req.body;
 
+    // Validate address
     if (!address_id) {
       return res.status(400).json({
         success: false,
@@ -27,16 +32,30 @@ export const checkout = async (req, res) => {
       });
     }
 
-    /*
-     * Verify address belongs to logged-in user
-     */
+    // Get customer details for confirmation email
+    const [users] = await connection.query(
+      `SELECT name, email
+       FROM users
+       WHERE id = ?
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer account not found",
+      });
+    }
+
+    const customer = users[0];
+
+    // Verify address belongs to logged-in user
     const [addresses] = await connection.query(
-      `
-      SELECT id
-      FROM addresses
-      WHERE id = ? AND user_id = ?
-      LIMIT 1
-      `,
+      `SELECT id
+       FROM addresses
+       WHERE id = ? AND user_id = ?
+       LIMIT 1`,
       [address_id, userId]
     );
 
@@ -47,30 +66,22 @@ export const checkout = async (req, res) => {
       });
     }
 
-    /*
-     * Get cart items
-     */
+    // Get cart items
     const [cartItems] = await connection.query(
-      `
-      SELECT
-        c.id AS cart_id,
-        c.product_id,
-        c.quantity,
-
-        p.name,
-        p.sku,
-        p.price,
-        p.sale_price,
-        p.stock_quantity,
-        p.status
-
-      FROM cart c
-
-      INNER JOIN products p
-        ON p.id = c.product_id
-
-      WHERE c.user_id = ?
-      `,
+      `SELECT
+         c.id AS cart_id,
+         c.product_id,
+         c.quantity,
+         p.name,
+         p.sku,
+         p.price,
+         p.sale_price,
+         p.stock_quantity,
+         p.status
+       FROM cart c
+       INNER JOIN products p
+         ON p.id = c.product_id
+       WHERE c.user_id = ?`,
       [userId]
     );
 
@@ -81,9 +92,7 @@ export const checkout = async (req, res) => {
       });
     }
 
-    /*
-     * Check stock
-     */
+    // Check product availability and stock
     for (const item of cartItems) {
       if (item.status !== "active") {
         return res.status(400).json({
@@ -100,9 +109,7 @@ export const checkout = async (req, res) => {
       }
     }
 
-    /*
-     * Calculate subtotal
-     */
+    // Calculate subtotal
     let subtotal = 0;
 
     const preparedItems = cartItems.map((item) => {
@@ -126,49 +133,36 @@ export const checkout = async (req, res) => {
       };
     });
 
-    /*
-     * For now:
-     * discount = 0
-     * shipping = 0
-     */
+    // Calculate order amounts
     const discountAmount = 0;
     const shippingAmount = 0;
 
     const totalAmount =
-      subtotal -
-      discountAmount +
-      shippingAmount;
+      subtotal - discountAmount + shippingAmount;
 
-    /*
-     * Generate order number
-     */
+    // Generate order number
     const orderNumber =
       `MKS-${Date.now()}-${userId}`;
 
-    /*
-     * Start transaction
-     */
+    // Start database transaction
     await connection.beginTransaction();
+    transactionStarted = true;
 
-    /*
-     * Create order
-     */
+    // Create order
     const [orderResult] = await connection.query(
-      `
-      INSERT INTO orders
-      (
-        user_id,
-        address_id,
-        order_number,
-        subtotal,
-        discount_amount,
-        shipping_amount,
-        total_amount,
-        payment_method,
-        notes
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `,
+      `INSERT INTO orders
+       (
+         user_id,
+         address_id,
+         order_number,
+         subtotal,
+         discount_amount,
+         shipping_amount,
+         total_amount,
+         payment_method,
+         notes
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         address_id,
@@ -184,25 +178,20 @@ export const checkout = async (req, res) => {
 
     const orderId = orderResult.insertId;
 
-    /*
-     * Create order items
-     * and reduce stock
-     */
+    // Create order items and reduce stock
     for (const item of preparedItems) {
       await connection.query(
-        `
-        INSERT INTO order_items
-        (
-          order_id,
-          product_id,
-          product_name,
-          sku,
-          quantity,
-          price,
-          subtotal
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        `,
+        `INSERT INTO order_items
+         (
+           order_id,
+           product_id,
+           product_name,
+           sku,
+           quantity,
+           price,
+           subtotal
+         )
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           orderId,
           item.productId,
@@ -215,13 +204,10 @@ export const checkout = async (req, res) => {
       );
 
       const [stockResult] = await connection.query(
-        `
-        UPDATE products
-        SET stock_quantity =
-            stock_quantity - ?
-        WHERE id = ?
-          AND stock_quantity >= ?
-        `,
+        `UPDATE products
+         SET stock_quantity = stock_quantity - ?
+         WHERE id = ?
+           AND stock_quantity >= ?`,
         [
           item.quantity,
           item.productId,
@@ -236,22 +222,52 @@ export const checkout = async (req, res) => {
       }
     }
 
-    /*
-     * Clear cart
-     */
+    // Clear customer's cart
     await connection.query(
-      `
-      DELETE FROM cart
-      WHERE user_id = ?
-      `,
+      `DELETE FROM cart
+       WHERE user_id = ?`,
       [userId]
     );
 
+    // Commit database transaction
     await connection.commit();
+    transactionStarted = false;
 
+    // ==========================================
+    // SEND ORDER CONFIRMATION EMAIL
+    // ==========================================
+
+    let emailSent = false;
+
+    if (customer.email) {
+      try {
+        await sendOrderConfirmationEmail({
+          name: customer.name,
+          email: customer.email,
+          orderId: orderNumber,
+          amount: totalAmount.toFixed(2),
+        });
+
+        emailSent = true;
+
+        console.log(
+          `Order confirmation email sent for ${orderNumber}`
+        );
+
+      } catch (emailError) {
+        // Email failure must not undo a successful order
+        console.error(
+          `Order ${orderNumber} created, but confirmation email failed:`,
+          emailError.message
+        );
+      }
+    }
+
+    // Send checkout response
     return res.status(201).json({
       success: true,
       message: "Order placed successfully",
+      email_sent: emailSent,
       order: {
         id: orderId,
         order_number: orderNumber,
@@ -264,50 +280,72 @@ export const checkout = async (req, res) => {
         payment_status: "pending",
       },
     });
-  } catch (error) {
-    await connection.rollback();
 
-    console.error(error);
+  } catch (error) {
+    if (connection && transactionStarted) {
+      await connection.rollback();
+    }
+
+    console.error("Checkout error:", error);
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Unable to place order",
     });
+
   } finally {
-    connection.release();
+    if (connection) {
+      connection.release();
+    }
   }
 };
 
+// ==========================================
+// GET CUSTOMER ORDERS
+// ==========================================
+
 export const getMyOrders = async (req, res) => {
   try {
-    const orders = await getOrdersByUserId(
-      req.user.id
+    const [orders] = await pool.query(
+      `SELECT *
+       FROM orders
+       WHERE user_id = ?
+       ORDER BY created_at DESC`,
+      [req.user.id]
     );
 
     return res.json({
       success: true,
       orders,
     });
+
   } catch (error) {
-    console.error(error);
+    console.error("Get my orders error:", error);
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Unable to retrieve orders",
     });
   }
 };
+
+// ==========================================
+// GET SINGLE CUSTOMER ORDER
+// ==========================================
 
 export const getSingleOrder = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const order = await getOrderById(
-      id,
-      req.user.id
+    const [orders] = await pool.query(
+      `SELECT *
+       FROM orders
+       WHERE id = ? AND user_id = ?
+       LIMIT 1`,
+      [id, req.user.id]
     );
 
-    if (!order) {
+    if (orders.length === 0) {
       return res.status(404).json({
         success: false,
         message: "Order not found",
@@ -316,45 +354,107 @@ export const getSingleOrder = async (req, res) => {
 
     return res.json({
       success: true,
-      order,
+      order: orders[0],
     });
+
   } catch (error) {
-    console.error(error);
+    console.error("Get single order error:", error);
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Unable to retrieve order",
     });
   }
 };
 
+// ==========================================
+// CANCEL CUSTOMER ORDER
+// ==========================================
+
 export const cancelMyOrder = async (req, res) => {
+  let connection;
+
   try {
     const { id } = req.params;
 
-    const cancelled = await cancelOrder(
-      id,
-      req.user.id
+    connection = await pool.getConnection();
+
+    await connection.beginTransaction();
+
+    const [orders] = await connection.query(
+      `SELECT id, status
+       FROM orders
+       WHERE id = ? AND user_id = ?
+       FOR UPDATE`,
+      [id, req.user.id]
     );
 
-    if (!cancelled) {
-      return res.status(400).json({
+    if (orders.length === 0) {
+      await connection.rollback();
+
+      return res.status(404).json({
         success: false,
-        message:
-          "Order cannot be cancelled or order not found",
+        message: "Order not found",
       });
     }
+
+    const order = orders[0];
+
+    if (!["pending"].includes(order.status)) {
+      await connection.rollback();
+
+      return res.status(400).json({
+        success: false,
+        message: "This order cannot be cancelled",
+      });
+    }
+
+    // Restore stock for cancelled order
+    const [items] = await connection.query(
+      `SELECT product_id, quantity
+       FROM order_items
+       WHERE order_id = ?`,
+      [id]
+    );
+
+    for (const item of items) {
+      await connection.query(
+        `UPDATE products
+         SET stock_quantity = stock_quantity + ?
+         WHERE id = ?`,
+        [item.quantity, item.product_id]
+      );
+    }
+
+    await connection.query(
+      `UPDATE orders
+       SET status = 'cancelled'
+       WHERE id = ? AND user_id = ?`,
+      [id, req.user.id]
+    );
+
+    await connection.commit();
 
     return res.json({
       success: true,
       message: "Order cancelled successfully",
     });
+
   } catch (error) {
-    console.error(error);
+    if (connection) {
+      await connection.rollback();
+    }
+
+    console.error("Cancel order error:", error);
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Unable to cancel order",
     });
+
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };

@@ -160,6 +160,20 @@ export const updateHomepagePromo = async (data) => {
 };
 
 // =====================================================
+// CUSTOMER PRODUCT APIs
+// =====================================================
+
+export const getProducts = async () => {
+  const response = await api.get("/products");
+  return response.data;
+};
+
+export const getProduct = async (id) => {
+  const response = await api.get(`/products/${id}`);
+  return response.data;
+};
+
+// =====================================================
 // PUBLIC CATEGORIES
 // =====================================================
 
@@ -183,4 +197,51 @@ export const deleteCategory = async (id) => {
   const response = await api.delete(`/categories/${id}`);
   return response.data;
 };
+
+// =====================================================
+// CUSTOMER CART APIs
+// =====================================================
+
+export const getCart = async () => {
+  const response = await api.get("/cart");
+  return response.data;
+};
+
+export const addToCart = async (product_id, quantity = 1) => {
+  const response = await api.post("/cart", {
+    product_id,
+    quantity,
+  });
+
+  return response.data;
+};
+
+export const updateCartItem = async (id, quantity) => {
+  const response = await api.put(`/cart/${id}`, {
+    quantity,
+  });
+
+  return response.data;
+};
+
+export const removeCartItem = async (id) => {
+  const response = await api.delete(`/cart/${id}`);
+  return response.data;
+};
+
+export const clearCart = async () => {
+  const response = await api.delete("/cart");
+  return response.data;
+};
+
+// =====================================================
+// CUSTOMER CHECKOUT API
+// =====================================================
+
+export const checkoutOrder = async (data) => {
+  const response = await api.post("/orders/checkout", data);
+  return response.data;
+};
 export default api;
+
+
