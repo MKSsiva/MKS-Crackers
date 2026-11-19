@@ -1,130 +1,120 @@
-
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import api from "../services/api";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
 import "./Products.css";
 
-const getProductImage = (product) => {
-  if (product.primary_image) return product.primary_image;
-  if (product.primary_image_url) return product.primary_image_url;
-  if (product.image_url) return product.image_url;
-
-  if (Array.isArray(product.images) && product.images.length > 0) {
-    const primary =
-      product.images.find((image) => image.is_primary) ||
-      product.images[0];
-
-    return typeof primary === "string"
-      ? primary
-      : primary.image_url || primary.url || "";
-  }
-
-  return "";
-};
-
-const formatPrice = (price) =>
-  Number(price || 0).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
-function Products() {
-  const navigate = useNavigate();
-
+const Products = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [productImages, setProductImages] = useState({});
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
 
   const [loading, setLoading] = useState(true);
-  const [addingProductId, setAddingProductId] = useState(null);
+  const [addingProduct, setAddingProduct] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  // Fetch products, categories and their images
   useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const [productsResponse, categoriesResponse] =
+          await Promise.all([
+            api.get("/products"),
+            api.get("/categories"),
+          ]);
+
+        const productsData =
+          productsResponse.data ?? productsResponse;
+
+        const categoriesData =
+          categoriesResponse.data ?? categoriesResponse;
+
+        if (!productsData.success) {
+          throw new Error(
+            productsData.message || "Unable to load products."
+          );
+        }
+
+        const activeProducts = (productsData.products || []).filter(
+          (product) => product.status === "active"
+        );
+
+        setProducts(activeProducts);
+        setCategories(categoriesData.categories || []);
+
+        // Fetch Cloudinary images for each product
+        const imageResults = await Promise.allSettled(
+          activeProducts.map((product) =>
+            api.get(`/product-images/product/${product.id}`)
+          )
+        );
+
+        const imageMap = {};
+
+        imageResults.forEach((result, index) => {
+          if (result.status !== "fulfilled") return;
+
+          const response = result.value.data ?? result.value;
+          const images = response.images || [];
+
+          const primaryImage =
+            images.find((image) => image.is_primary) || images[0];
+
+          if (primaryImage?.image_url) {
+            imageMap[activeProducts[index].id] =
+              primaryImage.image_url;
+          }
+        });
+
+        setProductImages(imageMap);
+      } catch (err) {
+        console.error("Product loading error:", err);
+
+        setError(
+          err.response?.data?.message ||
+          err.message ||
+          "Unable to load products. Please try again."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadProducts();
   }, []);
 
-  const loadProducts = async () => {
+  // Category filtering
+  const filteredProducts = useMemo(() => {
+    if (selectedCategory === "all") {
+      return products;
+    }
+
+    return products.filter(
+      (product) =>
+        String(product.category_id) === String(selectedCategory)
+    );
+  }, [products, selectedCategory]);
+
+  // Add product to cart
+  const handleAddToCart = async (product) => {
     try {
-      setLoading(true);
+      setAddingProduct(product.id);
+      setMessage("");
       setError("");
 
-      const [productResponse, categoryResponse] = await Promise.all([
-        api.get("/products"),
-        api.get("/categories"),
-      ]);
-
-      const productData = productResponse.data ?? productResponse;
-      const categoryData = categoryResponse.data ?? categoryResponse;
-
-      if (!productData.success) {
-        throw new Error(
-          productData.message || "Unable to load products."
-        );
+      if (!localStorage.getItem("token")) {
+        setError("Please login to add products to your cart.");
+        return;
       }
 
-      const activeProducts = (productData.products || []).filter(
-        (product) => product.status === "active"
-      );
-
-      const activeCategories = (categoryData.categories || []).filter(
-        (category) => category.status === "active"
-      );
-
-      setProducts(activeProducts);
-      setCategories(activeCategories);
-    } catch (err) {
-      console.error("Customer products loading error:", err);
-
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          "Unable to load products. Please try again."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const matchesCategory =
-        selectedCategory === "all" ||
-        String(product.category_id) === String(selectedCategory);
-
-      const search = searchTerm.trim().toLowerCase();
-
-      const matchesSearch =
-        !search ||
-        product.name?.toLowerCase().includes(search) ||
-        product.sku?.toLowerCase().includes(search) ||
-        product.category_name?.toLowerCase().includes(search);
-
-      return matchesCategory && matchesSearch;
-    });
-  }, [products, selectedCategory, searchTerm]);
-
-  const handleAddToCart = async (product) => {
-    setMessage("");
-    setError("");
-
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setError("Please log in to add products to your cart.");
-      return;
-    }
-
-    if (Number(product.stock_quantity) <= 0) {
-      setError("Sorry, this product is currently out of stock.");
-      return;
-    }
-
-    try {
-      setAddingProductId(product.id);
+      if (Number(product.stock_quantity) <= 0) {
+        setError("This product is currently out of stock.");
+        return;
+      }
 
       const response = await api.post("/cart", {
         product_id: product.id,
@@ -133,67 +123,70 @@ function Products() {
 
       const data = response.data ?? response;
 
-      if (!data.success) {
-        throw new Error(data.message || "Unable to add product to cart.");
+      if (data.success) {
+        setMessage(`${product.name} added to cart successfully!`);
+      } else {
+        setError(data.message || "Unable to add product to cart.");
       }
-
-      setMessage(`${product.name} added to your cart successfully.`);
     } catch (err) {
       console.error("Add to cart error:", err);
 
       setError(
         err.response?.data?.message ||
-          err.message ||
-          "Unable to add product to cart."
+        "Unable to add product. Please try again."
       );
     } finally {
-      setAddingProductId(null);
+      setAddingProduct(null);
     }
   };
 
+  const getProductPrice = (product) => {
+    return Number(product.sale_price ?? product.price ?? 0);
+  };
+
+  if (loading) {
+    return (
+      <div className="products-loading">
+        <div className="products-spinner"></div>
+        <p>Loading products...</p>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <Header />
+    <div className="products-page">
+      <div className="products-container">
 
-      <main className="customer-products-page">
-        <section className="products-heading">
-          <span className="products-eyebrow">MKS CRACKERS</span>
-
-          <h1>Our Products</h1>
-
-          <p>
-            Explore our collection of quality crackers and make
-            every celebration special.
-          </p>
-        </section>
-
-        <section className="products-toolbar">
-          <div className="products-search">
-            <span className="search-icon">⌕</span>
-            <input
-              type="search"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
+        <div className="products-heading">
+          <div>
+            <h1>Our Products</h1>
+            <p>
+              Discover quality crackers for every celebration.
+            </p>
           </div>
 
-          <button
-            type="button"
-            className="view-cart-button"
-            onClick={() => navigate("/cart")}
-          >
-            <span>🛒</span> View Cart
-          </button>
-        </section>
+          <Link to="/cart" className="view-cart-button">
+            🛒 View Cart
+          </Link>
+        </div>
 
-        <section className="products-category-list">
+        {message && (
+          <div className="products-success">
+            {message}
+          </div>
+        )}
+
+        {error && (
+          <div className="products-error">
+            {error}
+          </div>
+        )}
+
+        {/* Category Filter */}
+        <div className="category-filters">
           <button
-            type="button"
             className={
-              selectedCategory === "all"
-                ? "category-filter active"
-                : "category-filter"
+              selectedCategory === "all" ? "active" : ""
             }
             onClick={() => setSelectedCategory("all")}
           >
@@ -202,193 +195,135 @@ function Products() {
 
           {categories.map((category) => (
             <button
-              type="button"
               key={category.id}
               className={
                 String(selectedCategory) === String(category.id)
-                  ? "category-filter active"
-                  : "category-filter"
+                  ? "active"
+                  : ""
               }
-              onClick={() => setSelectedCategory(String(category.id))}
+              onClick={() =>
+                setSelectedCategory(String(category.id))
+              }
             >
               {category.name}
             </button>
           ))}
-        </section>
+        </div>
 
-        {error && (
-          <div className="products-alert products-error" role="alert">
-            {error}
+        {/* Product Listing */}
+        {filteredProducts.length === 0 ? (
+          <div className="products-empty">
+            <h2>No Products Found</h2>
+            <p>There are no products in this category.</p>
           </div>
-        )}
+        ) : (
+          <div className="products-grid">
+            {filteredProducts.map((product) => {
+              const price = getProductPrice(product);
+              const originalPrice = Number(product.price || 0);
+              const stock = Number(product.stock_quantity || 0);
+              const outOfStock = stock <= 0;
 
-        {message && (
-          <div className="products-alert products-success" role="status">
-            {message}
-            <button
-              type="button"
-              onClick={() => navigate("/cart")}
-              className="message-cart-link"
-            >
-              View Cart
-            </button>
-          </div>
-        )}
+              return (
+                <div className="product-card" key={product.id}>
 
-        <section className="products-results">
-          <div className="products-results-heading">
-            <h2>
-              {selectedCategory === "all"
-                ? "All Products"
-                : categories.find(
-                    (category) =>
-                      String(category.id) === String(selectedCategory)
-                  )?.name || "Products"}
-            </h2>
-
-            <span>
-              {loading
-                ? "Loading..."
-                : `${filteredProducts.length} products`}
-            </span>
-          </div>
-
-          {loading ? (
-            <div className="products-loading">
-              <div className="products-spinner" />
-              <p>Loading our products...</p>
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="products-empty">
-              <div className="empty-icon">🎆</div>
-              <h3>No products found</h3>
-              <p>
-                Try another category or search with a different product name.
-              </p>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedCategory("all");
-                  setSearchTerm("");
-                }}
-              >
-                Show All Products
-              </button>
-            </div>
-          ) : (
-            <div className="customer-products-grid">
-              {filteredProducts.map((product) => {
-                const image = getProductImage(product);
-                const price = Number(product.price || 0);
-                const salePrice =
-                  product.sale_price === null ||
-                  product.sale_price === undefined ||
-                  product.sale_price === ""
-                    ? null
-                    : Number(product.sale_price);
-
-                const hasSale =
-                  salePrice !== null &&
-                  salePrice > 0 &&
-                  salePrice < price;
-
-                const stock = Number(product.stock_quantity || 0);
-                const isAdding = addingProductId === product.id;
-
-                return (
-                  <article
-                    className="customer-product-card"
-                    key={product.id}
+                  <Link
+                    to={`/products/${product.id}`}
+                    className="product-image-link"
                   >
-                    <div className="customer-product-image">
-                      {hasSale && (
-                        <span className="product-sale-badge">
-                          SALE
-                        </span>
-                      )}
-
-                      {image ? (
-                        <img
-                          src={image}
-                          alt={product.name}
-                          loading="lazy"
-                          onError={(event) => {
-                            event.currentTarget.style.display = "none";
-                            event.currentTarget.nextElementSibling.style.display =
-                              "flex";
-                          }}
-                        />
-                      ) : null}
-
-                      <div
-                        className="product-image-placeholder"
-                        style={{ display: image ? "none" : "flex" }}
-                      >
-                        <span>🎆</span>
-                        <small>MKS Crackers</small>
+                    {productImages[product.id] ? (
+                      <img
+                        src={productImages[product.id]}
+                        alt={product.name}
+                        className="product-image"
+                      />
+                    ) : (
+                      <div className="product-image-placeholder">
+                        🎆
+                        <span>No Image Available</span>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="customer-product-info">
-                      <span className="customer-product-category">
-                        {product.category_name || "Crackers"}
+                    {product.featured === 1 ||
+                    product.featured === true ? (
+                      <span className="featured-badge">
+                        Featured
+                      </span>
+                    ) : null}
+                  </Link>
+
+                  <div className="product-card-content">
+
+                    <h3>{product.name}</h3>
+
+                    {product.sku && (
+                      <p className="product-sku">
+                        SKU: {product.sku}
+                      </p>
+                    )}
+
+                    <div className="product-prices">
+                      <span className="current-price">
+                        ₹{price.toFixed(2)}
                       </span>
 
-                      <h3>{product.name}</h3>
-
-                      {product.sku && (
-                        <p className="customer-product-sku">
-                          SKU: {product.sku}
-                        </p>
+                      {originalPrice > price && (
+                        <span className="original-price">
+                          ₹{originalPrice.toFixed(2)}
+                        </span>
                       )}
+                    </div>
 
-                      <div className="customer-product-pricing">
-                        <strong>
-                          ₹{formatPrice(hasSale ? salePrice : price)}
-                        </strong>
+                    <p
+                      className={
+                        outOfStock
+                          ? "stock-status out-of-stock"
+                          : stock <= 5
+                          ? "stock-status low-stock"
+                          : "stock-status in-stock"
+                      }
+                    >
+                      {outOfStock
+                        ? "Out of Stock"
+                        : stock <= 5
+                        ? `Only ${stock} left`
+                        : "In Stock"}
+                    </p>
 
-                        {hasSale && (
-                          <del>₹{formatPrice(price)}</del>
-                        )}
-                      </div>
-
-                      <p
-                        className={
-                          stock > 0
-                            ? "customer-product-stock in-stock"
-                            : "customer-product-stock out-of-stock"
-                        }
+                    <div className="product-card-actions">
+                      <Link
+                        to={`/products/${product.id}`}
+                        className="details-button"
                       >
-                        {stock > 0
-                          ? `In Stock (${stock})`
-                          : "Out of Stock"}
-                      </p>
+                        View Details
+                      </Link>
 
                       <button
-                        type="button"
-                        className="add-to-cart-button"
-                        disabled={stock <= 0 || isAdding}
+                        className="add-cart-button"
+                        disabled={
+                          outOfStock ||
+                          addingProduct === product.id
+                        }
                         onClick={() => handleAddToCart(product)}
                       >
-                        {isAdding
+                        {addingProduct === product.id
                           ? "Adding..."
-                          : stock <= 0
-                            ? "Out of Stock"
-                            : "Add to Cart"}
+                          : outOfStock
+                          ? "Out of Stock"
+                          : "Add to Cart"}
                       </button>
                     </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      </main>
 
-      <Footer />
-    </>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+      </div>
+    </div>
   );
-}
+};
 
 export default Products;

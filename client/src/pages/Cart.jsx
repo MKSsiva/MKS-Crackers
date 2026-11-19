@@ -22,6 +22,21 @@ const initialAddressForm = {
   is_default: false,
 };
 
+const unwrap = (response) => response?.data ?? response;
+
+const getCartItems = (response) => {
+  const data = unwrap(response);
+
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.cart)) return data.cart;
+  if (Array.isArray(data?.cart?.items)) return data.cart.items;
+  if (Array.isArray(data?.data?.items)) return data.data.items;
+  if (Array.isArray(data?.data?.cart)) return data.data.cart;
+
+  return [];
+};
+
 function Cart() {
   const navigate = useNavigate();
 
@@ -34,6 +49,7 @@ function Cart() {
   const [loading, setLoading] = useState(true);
   const [savingAddress, setSavingAddress] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
+  const [clearingCart, setClearingCart] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
 
   const [error, setError] = useState("");
@@ -47,7 +63,87 @@ function Cart() {
     }
 
     loadCartAndAddresses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
+
+  const getItemId = (item) => item.id ?? item.cart_id;
+
+  const getProductId = (item) =>
+    item.product_id ?? item.product?.id;
+
+  const getItemPrice = (item) => {
+    const salePrice =
+      item.sale_price !== null &&
+      item.sale_price !== undefined &&
+      item.sale_price !== ""
+        ? Number(item.sale_price)
+        : null;
+
+    return salePrice ?? Number(item.price || 0);
+  };
+
+  const getItemName = (item) =>
+    item.product_name || item.name || item.product?.name || "Product";
+
+  const getItemImage = (item) =>
+    item.primary_image ||
+    item.image_url ||
+    item.product_image ||
+    item.product?.primary_image ||
+    "";
+
+  const getItemSku = (item) =>
+    item.sku || item.product_sku || item.product?.sku || "";
+
+  const getItemStock = (item) => {
+    const value = item.stock_quantity ?? item.product?.stock_quantity;
+    return value === null || value === undefined ? null : Number(value);
+  };
+
+  const loadCartOnly = async () => {
+    const response = await getCart();
+    const cartItems = getCartItems(response);
+
+    // Load product-specific Cloudinary images if the cart response
+    // does not already contain an image.
+    const itemsWithImages = await Promise.all(
+      cartItems.map(async (item) => {
+        if (getItemImage(item)) return item;
+
+        const productId = getProductId(item);
+        if (!productId) return item;
+
+        try {
+          const imageResponse = await api.get(
+            `/product-images/product/${productId}`
+          );
+          const imageData = unwrap(imageResponse);
+          const productImages = Array.isArray(imageData.images)
+            ? imageData.images
+            : [];
+
+          const primaryImage =
+            productImages.find(
+              (image) =>
+                Number(image.is_primary) === 1 ||
+                image.is_primary === true
+            ) || productImages[0];
+
+          return primaryImage
+            ? { ...item, primary_image: primaryImage.image_url }
+            : item;
+        } catch (imageError) {
+          console.error(
+            `Unable to load image for product ${productId}:`,
+            imageError
+          );
+          return item;
+        }
+      })
+    );
+
+    setItems(itemsWithImages);
+  };
 
   const loadCartAndAddresses = async () => {
     try {
@@ -59,16 +155,48 @@ function Cart() {
         api.get("/addresses"),
       ]);
 
-      const cartItems =
-        cartResponse.items ||
-        cartResponse.cart?.items ||
-        cartResponse.cart ||
-        [];
+      const cartItems = getCartItems(cartResponse);
+      const addressData = unwrap(addressResponse);
+      const addressList = Array.isArray(addressData.addresses)
+        ? addressData.addresses
+        : [];
 
-      const addressList = addressResponse.data.addresses || [];
+      setAddresses(addressList);
 
-      setItems(Array.isArray(cartItems) ? cartItems : []);
-      setAddresses(Array.isArray(addressList) ? addressList : []);
+      // Load product images when they are not included in cart results.
+      const itemsWithImages = await Promise.all(
+        cartItems.map(async (item) => {
+          if (getItemImage(item)) return item;
+
+          const productId = getProductId(item);
+          if (!productId) return item;
+
+          try {
+            const imageResponse = await api.get(
+              `/product-images/product/${productId}`
+            );
+            const imageData = unwrap(imageResponse);
+            const productImages = Array.isArray(imageData.images)
+              ? imageData.images
+              : [];
+
+            const primaryImage =
+              productImages.find(
+                (image) =>
+                  Number(image.is_primary) === 1 ||
+                  image.is_primary === true
+              ) || productImages[0];
+
+            return primaryImage
+              ? { ...item, primary_image: primaryImage.image_url }
+              : item;
+          } catch {
+            return item;
+          }
+        })
+      );
+
+      setItems(itemsWithImages);
 
       if (addressList.length > 0) {
         const defaultAddress = addressList.find(
@@ -86,50 +214,21 @@ function Cart() {
       console.error("Cart loading error:", err);
       setError(
         err.response?.data?.message ||
-        "Unable to load your cart. Please try again."
+          "Unable to load your cart. Please try again."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const loadCartOnly = async () => {
-    const response = await getCart();
-
-    const cartItems =
-      response.items ||
-      response.cart?.items ||
-      response.cart ||
-      [];
-
-    setItems(Array.isArray(cartItems) ? cartItems : []);
-  };
-
-  const getItemId = (item) => item.id ?? item.cart_id;
-
-  const getItemPrice = (item) => {
-    const salePrice =
-      item.sale_price !== null &&
-      item.sale_price !== undefined &&
-      item.sale_price !== ""
-        ? Number(item.sale_price)
-        : null;
-
-    return salePrice ?? Number(item.price || 0);
-  };
-
-  const getItemName = (item) =>
-    item.product_name || item.name || "Product";
-
-  const getItemImage = (item) =>
-    item.primary_image ||
-    item.image_url ||
-    item.product_image ||
-    "";
-
   const subtotal = items.reduce(
     (total, item) =>
       total + getItemPrice(item) * Number(item.quantity || 0),
+    0
+  );
+
+  const totalQuantity = items.reduce(
+    (total, item) => total + Number(item.quantity || 0),
     0
   );
 
@@ -155,8 +254,10 @@ function Cart() {
         is_default: addressForm.is_default ? 1 : 0,
       });
 
-      if (response.data.success && response.data.address) {
-        const newAddress = response.data.address;
+      const data = unwrap(response);
+
+      if (data.success && data.address) {
+        const newAddress = data.address;
 
         setAddresses((previous) => {
           if (addressForm.is_default) {
@@ -177,13 +278,13 @@ function Cart() {
         setShowAddressForm(false);
         setMessage("Delivery address added successfully.");
       } else {
-        setError(response.data.message || "Unable to add address.");
+        setError(data.message || "Unable to add address.");
       }
     } catch (err) {
       console.error("Add address error:", err);
       setError(
         err.response?.data?.message ||
-        "Unable to save your address. Please try again."
+          "Unable to save your address. Please try again."
       );
     } finally {
       setSavingAddress(false);
@@ -193,12 +294,11 @@ function Cart() {
   const handleQuantityChange = async (item, newQuantity) => {
     const quantity = Number(newQuantity);
     const itemId = getItemId(item);
+    const stock = getItemStock(item);
 
     if (!Number.isInteger(quantity) || quantity < 1) return;
 
-    const stock = Number(item.stock_quantity);
-
-    if (Number.isFinite(stock) && stock > 0 && quantity > stock) {
+    if (stock !== null && quantity > stock) {
       setError(
         `Only ${stock} units are available for ${getItemName(item)}.`
       );
@@ -207,20 +307,24 @@ function Cart() {
 
     try {
       setError("");
+      setMessage("");
       setUpdatingId(itemId);
 
       const response = await updateCartItem(itemId, quantity);
+      const data = unwrap(response);
 
-      if (response.success) {
-        await loadCartOnly();
-      } else {
-        setError(response.message || "Unable to update quantity.");
+      if (data.success === false) {
+        throw new Error(data.message || "Unable to update quantity.");
       }
+
+      await loadCartOnly();
+      setMessage("Cart quantity updated.");
     } catch (err) {
       console.error("Quantity update error:", err);
       setError(
         err.response?.data?.message ||
-        "Unable to update quantity."
+          err.message ||
+          "Unable to update quantity."
       );
     } finally {
       setUpdatingId(null);
@@ -232,23 +336,62 @@ function Cart() {
 
     try {
       setError("");
+      setMessage("");
       setUpdatingId(itemId);
 
       const response = await removeCartItem(itemId);
+      const data = unwrap(response);
 
-      if (response.success) {
-        await loadCartOnly();
-      } else {
-        setError(response.message || "Unable to remove item.");
+      if (data.success === false) {
+        throw new Error(data.message || "Unable to remove item.");
       }
+
+      await loadCartOnly();
+      setMessage(`${getItemName(item)} removed from your cart.`);
     } catch (err) {
       console.error("Remove cart item error:", err);
       setError(
         err.response?.data?.message ||
-        "Unable to remove item."
+          err.message ||
+          "Unable to remove item."
       );
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleClearCart = async () => {
+    if (items.length === 0) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to remove all products from your cart?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setClearingCart(true);
+      setError("");
+      setMessage("");
+
+      const response = await api.delete("/cart");
+      const data = unwrap(response);
+
+      if (data.success === false) {
+        throw new Error(data.message || "Unable to clear cart.");
+      }
+
+      setItems([]);
+      setMessage("All products have been removed from your cart.");
+    } catch (err) {
+      console.error("Clear cart error:", err);
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to clear your cart."
+      );
+    } finally {
+      setClearingCart(false);
     }
   };
 
@@ -273,17 +416,24 @@ function Cart() {
         payment_method: "upi",
       });
 
-      if (response.success) {
-        setOrder(response.order || response.data?.order || response);
+      const data = unwrap(response);
+
+      if (data.success) {
+        setOrder(
+          data.order ||
+            data.data?.order ||
+            data.data ||
+            data
+        );
         setItems([]);
       } else {
-        setError(response.message || "Checkout failed.");
+        setError(data.message || "Checkout failed.");
       }
     } catch (err) {
       console.error("Checkout error:", err);
       setError(
         err.response?.data?.message ||
-        "Unable to place your order. Please try again."
+          "Unable to place your order. Please try again."
       );
     } finally {
       setCheckingOut(false);
@@ -321,10 +471,14 @@ function Cart() {
           <div className="order-summary">
             <p>
               <strong>Order Number:</strong>{" "}
-              {order.order_number || order.orderNumber || order.id || "Placed"}
+              {order.order_number ||
+                order.orderNumber ||
+                order.id ||
+                "Placed"}
             </p>
             <p>
-              <strong>Order Status:</strong> {order.status || "pending"}
+              <strong>Order Status:</strong>{" "}
+              {order.status || "pending"}
             </p>
             <p>
               <strong>Payment Status:</strong>{" "}
@@ -379,11 +533,28 @@ function Cart() {
       ) : (
         <div className="cart-layout">
           <section className="cart-items">
+            <div className="cart-items-header">
+              <h2>
+                Cart Items ({totalQuantity})
+              </h2>
+
+              <button
+                type="button"
+                className="clear-cart-button"
+                onClick={handleClearCart}
+                disabled={clearingCart || updatingId !== null}
+              >
+                {clearingCart ? "Clearing..." : "Clear Cart"}
+              </button>
+            </div>
+
             {items.map((item) => {
               const itemId = getItemId(item);
               const image = getItemImage(item);
               const price = getItemPrice(item);
               const quantity = Number(item.quantity || 1);
+              const stock = getItemStock(item);
+              const isUpdating = updatingId === itemId;
 
               return (
                 <article className="cart-item" key={itemId}>
@@ -397,13 +568,29 @@ function Cart() {
 
                   <div className="cart-item-details">
                     <h2>{getItemName(item)}</h2>
+
+                    {getItemSku(item) && (
+                      <p className="cart-item-sku">
+                        SKU: {getItemSku(item).trim()}
+                      </p>
+                    )}
+
                     <p className="cart-item-price">
-                      ₹{price.toFixed(2)}
+                      ₹{price.toFixed(2)} each
                     </p>
+
+                    {stock !== null && (
+                      <p className="cart-item-stock">
+                        {stock > 0
+                          ? `${stock} available`
+                          : "Out of stock"}
+                      </p>
+                    )}
 
                     <div className="cart-quantity">
                       <button
-                        disabled={updatingId === itemId || quantity <= 1}
+                        type="button"
+                        disabled={isUpdating || quantity <= 1}
                         onClick={() =>
                           handleQuantityChange(item, quantity - 1)
                         }
@@ -411,13 +598,13 @@ function Cart() {
                         −
                       </button>
 
-                      <span>{quantity}</span>
+                      <span>{isUpdating ? "..." : quantity}</span>
 
                       <button
+                        type="button"
                         disabled={
-                          updatingId === itemId ||
-                          (Number(item.stock_quantity) > 0 &&
-                            quantity >= Number(item.stock_quantity))
+                          isUpdating ||
+                          (stock !== null && quantity >= stock)
                         }
                         onClick={() =>
                           handleQuantityChange(item, quantity + 1)
@@ -428,11 +615,12 @@ function Cart() {
                     </div>
 
                     <button
+                      type="button"
                       className="remove-cart-item"
-                      disabled={updatingId === itemId}
+                      disabled={isUpdating || clearingCart}
                       onClick={() => handleRemoveItem(item)}
                     >
-                      {updatingId === itemId ? "Updating..." : "Remove"}
+                      {isUpdating ? "Updating..." : "Remove"}
                     </button>
                   </div>
 
@@ -448,8 +636,13 @@ function Cart() {
             <h2>Order Summary</h2>
 
             <div className="cart-summary-row">
-              <span>Items</span>
+              <span>Products</span>
               <span>{items.length}</span>
+            </div>
+
+            <div className="cart-summary-row">
+              <span>Total Quantity</span>
+              <span>{totalQuantity}</span>
             </div>
 
             <div className="cart-summary-row">
@@ -630,10 +823,13 @@ function Cart() {
             </div>
 
             <button
+              type="button"
               className="checkout-button"
               onClick={handleCheckout}
               disabled={
                 checkingOut ||
+                clearingCart ||
+                updatingId !== null ||
                 items.length === 0 ||
                 addresses.length === 0 ||
                 !addressId ||
@@ -644,6 +840,7 @@ function Cart() {
             </button>
 
             <button
+              type="button"
               className="continue-shopping-button"
               onClick={() => navigate("/products")}
             >

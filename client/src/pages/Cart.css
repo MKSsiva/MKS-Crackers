@@ -384,6 +384,92 @@
   cursor: not-allowed;
 }
 
+
+/* Step 16 - Cart Management */
+
+.cart-items-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.cart-items-header h2 {
+  margin: 0;
+}
+
+.clear-cart-button {
+  padding: 9px 15px;
+  border: 1px solid #dc2626;
+  border-radius: 5px;
+  background: #fff;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.clear-cart-button:hover:not(:disabled) {
+  background: #dc2626;
+  color: #fff;
+}
+
+.clear-cart-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cart-item-sku {
+  margin: 5px 0;
+  color: #777;
+  font-size: 12px;
+}
+
+.cart-item-stock {
+  margin: 5px 0;
+  color: #15803d;
+  font-size: 12px;
+}
+
+.cart-quantity button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cart-message {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+  padding: 12px 15px;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 14px;
+}
+
+.cart-message button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .cart-items-header {
+    align-items: flex-start;
+  }
+
+  .clear-cart-button {
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+}
+
 @keyframes cart-spin {
   to {
     transform: rotate(360deg);
