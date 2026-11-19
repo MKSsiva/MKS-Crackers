@@ -1,36 +1,8 @@
-import { rateLimit } from "express-rate-limit";
+// Rate limiting disabled for local development.
+// Existing routes can continue importing these middleware functions.
 
-// Login and registration protection
-export const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 5,
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
-  message: {
-    success: false,
-    message: "Too many authentication attempts. Please try again after 15 minutes.",
-  },
-});
+export const authLimiter = (req, res, next) => next();
 
-// Protection for sensitive write operations
-export const sensitiveActionLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 20,
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
-  message: {
-    success: false,
-    message: "Too many attempts. Please try again later.",
-  },
-});
+export const sensitiveActionLimiter = (req, res, next) => next();
 
-export const mutationLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 60,
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
-  message: {
-    success: false,
-    message: "Too many changes. Please try again later.",
-  },
-});
+export const mutationLimiter = (req, res, next) => next();
