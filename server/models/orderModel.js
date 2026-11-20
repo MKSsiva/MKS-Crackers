@@ -1,3 +1,4 @@
+
 import pool from "../config/db.js";
 
 export const createOrder = async ({
@@ -80,24 +81,38 @@ export const createOrderItem = async ({
   return result.insertId;
 };
 
+// Get all orders belonging to a customer,
+// including their name and mobile number.
 export const getOrdersByUserId = async (userId) => {
   const [rows] = await pool.query(
     `
     SELECT
-      id,
-      order_number,
-      subtotal,
-      discount_amount,
-      shipping_amount,
-      total_amount,
-      status,
-      payment_status,
-      payment_method,
-      created_at,
-      updated_at
-    FROM orders
-    WHERE user_id = ?
-    ORDER BY id DESC
+      o.id,
+      o.user_id,
+      o.address_id,
+      o.order_number,
+      o.subtotal,
+      o.discount_amount,
+      o.shipping_amount,
+      o.total_amount,
+      o.status,
+      o.payment_status,
+      o.payment_method,
+      o.notes,
+      o.created_at,
+      o.updated_at,
+
+      u.name AS customer_name,
+      u.phone AS customer_phone
+
+    FROM orders o
+
+    INNER JOIN users u
+      ON u.id = o.user_id
+
+    WHERE o.user_id = ?
+
+    ORDER BY o.created_at DESC, o.id DESC
     `,
     [userId]
   );
@@ -105,26 +120,52 @@ export const getOrdersByUserId = async (userId) => {
   return rows;
 };
 
+// Get one order with its ordered products
+// and delivery address.
 export const getOrderById = async (orderId, userId) => {
   const [orders] = await pool.query(
     `
     SELECT
-      id,
-      user_id,
-      address_id,
-      order_number,
-      subtotal,
-      discount_amount,
-      shipping_amount,
-      total_amount,
-      status,
-      payment_status,
-      payment_method,
-      notes,
-      created_at,
-      updated_at
-    FROM orders
-    WHERE id = ? AND user_id = ?
+      o.id,
+      o.user_id,
+      o.address_id,
+      o.order_number,
+      o.subtotal,
+      o.discount_amount,
+      o.shipping_amount,
+      o.total_amount,
+      o.status,
+      o.payment_status,
+      o.payment_method,
+      o.notes,
+      o.created_at,
+      o.updated_at,
+
+      u.name AS customer_name,
+      u.phone AS customer_phone,
+
+      a.name AS address_name,
+      a.phone AS address_phone,
+      a.address_line1,
+      a.address_line2,
+      a.city,
+      a.state,
+      a.pincode,
+      a.landmark,
+      a.address_type
+
+    FROM orders o
+
+    INNER JOIN users u
+      ON u.id = o.user_id
+
+    LEFT JOIN addresses a
+      ON a.id = o.address_id
+      AND a.user_id = o.user_id
+
+    WHERE o.id = ?
+      AND o.user_id = ?
+
     LIMIT 1
     `,
     [orderId, userId]

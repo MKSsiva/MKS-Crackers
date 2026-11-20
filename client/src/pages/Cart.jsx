@@ -231,6 +231,10 @@ function Cart() {
     (total, item) => total + Number(item.quantity || 0),
     0
   );
+  
+  const selectedAddress = addresses.find(
+  (address) => String(address.id) === String(addressId)
+  );
 
   const handleAddressChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -419,13 +423,28 @@ function Cart() {
       const data = unwrap(response);
 
       if (data.success) {
-        setOrder(
+        const createdOrder =
           data.order ||
-            data.data?.order ||
-            data.data ||
-            data
-        );
-        setItems([]);
+          data.data?.order ||
+          data.data ||
+          data;
+
+        // Send the successful checkout result to the dedicated
+        // OrderConfirmation page instead of showing success inside Cart.
+        navigate("/order-confirmation", {
+          state: {
+            order: createdOrder,
+            customer: {
+             name: selectedAddress?.name || "",
+             phone: selectedAddress?.phone || "",
+           },
+           address: selectedAddress,
+           items,
+           subtotal,
+           shipping: 0,
+           total: subtotal,
+          },
+        });
       } else {
         setError(data.message || "Checkout failed.");
       }
@@ -659,7 +678,26 @@ function Cart() {
               <span>Total</span>
               <strong>₹{subtotal.toFixed(2)}</strong>
             </div>
+            
+            <div className="cart-customer-section">
+  <h3>Customer Details</h3>
 
+  {selectedAddress ? (
+    <>
+      <div className="cart-customer-row">
+        <span>Customer Name</span>
+        <strong>{selectedAddress.name}</strong>
+      </div>
+
+      <div className="cart-customer-row">
+        <span>Mobile Number</span>
+        <strong>{selectedAddress.phone}</strong>
+      </div>
+    </>
+  ) : (
+    <p>Please select a delivery address.</p>
+  )}
+</div>
             <div className="cart-address-section">
               <h3>Delivery Address</h3>
 
