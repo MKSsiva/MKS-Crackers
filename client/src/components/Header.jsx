@@ -154,6 +154,8 @@ const Header = () => {
               <Link to="/contact" onClick={() => setMenuOpen(false)}>
                 Contact
               </Link>
+
+              <Link to="/my-orders">My Orders</Link>
             </div>
           </nav>
         )}

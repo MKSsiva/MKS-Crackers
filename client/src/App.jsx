@@ -5,6 +5,9 @@ import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Addresses from "./pages/Addresses";
+import OrderConfirmation from "./pages/OrderConfirmation";
+import MyOrders from "./pages/MyOrders";
+import OrderDetails from "./pages/OrderDetails";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -28,6 +31,14 @@ const App = () => {
       <Route path="/products/:id" element={<ProductDetails />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/addresses" element={<Addresses />} />
+    <Route
+  path="/order-confirmation"
+  element={<OrderConfirmation />}
+  
+/>
+<Route path="/my-orders" element={<MyOrders />} />
+<Route path="/my-orders/:id" element={<OrderDetails />} />
+
       {/* =========================
           Admin Login
       ========================== */}

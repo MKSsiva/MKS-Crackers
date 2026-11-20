@@ -1,0 +1,124 @@
+
+.confirmation-page {
+  min-height: 75vh;
+  padding: 45px 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.confirmation-card {
+  width: 100%;
+  max-width: 620px;
+  padding: 35px;
+  border-radius: 14px;
+  background: white;
+  text-align: center;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.07);
+}
+
+.confirmation-success-icon {
+  width: 65px;
+  height: 65px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: #16a34a;
+  font-size: 35px;
+  font-weight: 700;
+}
+
+.confirmation-card h1 {
+  color: #172033;
+  font-size: 27px;
+}
+
+.confirmation-description,
+.confirmation-note {
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.confirmation-details {
+  margin: 25px 0;
+  padding: 18px;
+  border-radius: 9px;
+  background: #f8fafc;
+  text-align: left;
+}
+
+.confirmation-details div {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.confirmation-details div:last-child {
+  border-bottom: 0;
+}
+
+.confirmation-details span {
+  color: #64748b;
+}
+
+.confirmation-details strong {
+  color: #172033;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.confirmation-primary-button,
+.confirmation-secondary-button {
+  width: 100%;
+  padding: 13px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.confirmation-primary-button {
+  color: white;
+  background: #e65b20;
+}
+
+.confirmation-secondary-button {
+  color: white;
+  background: #168b49;
+}
+
+.confirmation-primary-button:hover {
+  background: #c94713;
+}
+
+.confirmation-secondary-button:hover {
+  background: #116c39;
+}
+
+.confirmation-whatsapp-note {
+  display: block;
+  margin-top: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+@media (max-width: 550px) {
+  .confirmation-card {
+    padding: 22px 16px;
+  }
+
+  .confirmation-details div {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .confirmation-details strong {
+    text-align: left;
+  }
+}
