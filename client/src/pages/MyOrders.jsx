@@ -22,6 +22,7 @@ function MyOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   useEffect(() => {
     if (!localStorage.getItem("token")) {
@@ -86,24 +87,25 @@ function MyOrders() {
     <main className="my-orders-page">
       <div className="my-orders-container">
         <div className="my-orders-heading">
-          <div>
-            <h1>My Orders</h1>
-            <p>View and track your MKS Crackers orders.</p>
-          </div>
+  <div>
+    <h1>My Orders</h1>
+    <p>View and track your MKS Crackers orders.</p>
+  </div>
 
-          <div className="my-orders-heading-actions">
-            <span className="orders-count">
-              Total Orders: {orders.length}
-            </span>
+  <div className="my-orders-heading-actions">
+    <div className="orders-count-card">
+      <span className="orders-count-number">{orders.length}</span>
+      <span className="orders-count-label">Total Orders</span>
+    </div>
 
-            <button
-              className="orders-shopping-button"
-              onClick={() => navigate("/products")}
-            >
-              Continue Shopping
-            </button>
-          </div>
-        </div>
+    <button
+      className="orders-shopping-button"
+      onClick={() => navigate("/products")}
+    >
+      <span>＋</span> Continue Shopping
+    </button>
+  </div>
+</div>
 
         {error && <div className="orders-error">{error}</div>}
 
@@ -119,80 +121,154 @@ function MyOrders() {
           <div className="orders-groups">
             {groupedOrders.map(([monthKey, group]) => (
               <section className="orders-month-group" key={monthKey}>
-                <h2>{group.label}</h2>
+  <div className="orders-month-heading">
+    <div className="orders-month-title">
+      <span className="orders-month-icon">▦</span>
+      <div>
+        <h2>{group.label}</h2>
+        <p>
+          {group.orders.length}{" "}
+          {group.orders.length === 1 ? "order" : "orders"} this month
+        </p>
+      </div>
+    </div>
+  </div>
 
-                {group.orders.map((order) => (
-                  <article className="my-order-card" key={order.id}>
-                    <div className="my-order-top">
-                      <div>
-                        <span className="order-field-label">
-                          Order Number
-                        </span>
-                        <strong>{order.order_number}</strong>
-                      </div>
+  <div className="orders-month-list">
+    {group.orders.map((order) => {
+      const isExpanded =
+        String(expandedOrderId) === String(order.id);
 
-                      <span
-                        className={`order-status status-${order.status}`}
-                      >
-                        {order.status}
-                      </span>
-                    </div>
+      const orderStatus = String(
+        order.status || "pending"
+      ).toLowerCase();
 
-                    <div className="my-order-customer">
-                      <div>
-                        <span>Customer Name</span>
-                        <strong>
-                          {order.customer_name || "Not available"}
-                        </strong>
-                      </div>
+      return (
+        <article
+          className={`my-order-card ${isExpanded ? "order-card-expanded" : ""}`}
+          key={order.id}
+        >
+          <button
+            type="button"
+            className="my-order-card-header"
+            aria-expanded={isExpanded}
+            onClick={() =>
+              setExpandedOrderId(
+                isExpanded ? null : order.id
+              )
+            }
+          >
+            <div className="my-order-main-info">
+              <span className="order-field-label">
+                ORDER NUMBER
+              </span>
 
-                      <div>
-                        <span>Mobile Number</span>
-                        <strong>
-                          {order.customer_phone || "Not available"}
-                        </strong>
-                      </div>
-                    </div>
+              <strong className="my-order-number">
+                {order.order_number || `#${order.id}`}
+              </strong>
 
-                    <div className="my-order-information">
-                      <div>
-                        <span>Order Date</span>
-                        <strong>{formatDate(order.created_at)}</strong>
-                      </div>
+              <span className="my-order-date">
+                <icon-placeholder />
+                {formatDate(order.created_at)}
+              </span>
+            </div>
 
-                      <div>
-                        <span>Payment</span>
-                        <strong>
-                          {String(order.payment_status || "pending").toUpperCase()}
-                        </strong>
-                      </div>
+            <div className="my-order-header-right">
+              <span
+                className={`order-status status-${orderStatus}`}
+              >
+                {orderStatus}
+              </span>
 
-                      <div>
-                        <span>Total Amount</span>
-                        <strong>
-                          {formatCurrency(order.total_amount)}
-                        </strong>
-                      </div>
+              <span className="order-expand-icon">
+                {isExpanded ? "−" : "+"}
+              </span>
+            </div>
+          </button>
 
-                      <div>
-                        <span>Method</span>
-                        <strong>
-                          {String(order.payment_method || "upi").toUpperCase()}
-                        </strong>
-                      </div>
-                    </div>
+          <div className="my-order-card-summary">
+            <div>
+              <span>Customer Name</span>
+              <strong>
+                {order.customer_name || "Not available"}
+              </strong>
+            </div>
 
-                    <button
-                      className="order-details-button"
-                      onClick={() =>
-                        navigate(`/my-orders/${order.id}`)
-                      }
-                    >
-                      View Details
-                    </button>
-                  </article>
-                ))}
-              </section>
+            <div>
+              <span>Mobile Number</span>
+              <strong>
+                {order.customer_phone || "Not available"}
+              </strong>
+            </div>
+
+            <div>
+              <span>Payment</span>
+              <strong>
+                {String(order.payment_status || "pending").toUpperCase()}
+              </strong>
+            </div>
+
+            <div>
+              <span>Total Amount</span>
+              <strong className="order-total-price">
+                {formatCurrency(order.total_amount)}
+              </strong>
+            </div>
+          </div>
+
+          {isExpanded && (
+            <div className="my-order-expanded-content">
+              <div className="order-expanded-row">
+                <span>Order Date</span>
+                <strong>
+                  {new Date(order.created_at).toLocaleString("en-IN")}
+                </strong>
+              </div>
+
+              <div className="order-expanded-row">
+                <span>Payment Method</span>
+                <strong>
+                  {String(order.payment_method || "upi").toUpperCase()}
+                </strong>
+              </div>
+
+              <div className="order-expanded-row">
+                <span>Order Status</span>
+                <strong className={`order-status-text status-text-${orderStatus}`}>
+                  {orderStatus.toUpperCase()}
+                </strong>
+              </div>
+
+              <button
+                type="button"
+                className="order-details-button"
+                onClick={() =>
+                  navigate(`/my-orders/${order.id}`)
+                }
+              >
+                View Full Order Details
+                <span> →</span>
+              </button>
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="order-card-toggle"
+            onClick={() =>
+              setExpandedOrderId(
+                isExpanded ? null : order.id
+              )
+            }
+          >
+            {isExpanded ? "Show Less" : "View Order Information"}
+            <span>{isExpanded ? "⌃" : "⌄"}</span>
+          </button>
+        </article>
+      );
+    })}
+  </div>
+</section>
             ))}
           </div>
         )}

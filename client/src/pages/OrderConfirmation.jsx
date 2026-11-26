@@ -57,135 +57,265 @@ function OrderConfirmation() {
       .filter(Boolean)
       .join(", ");
 
-  const generateBill = () => {
-    const doc = new jsPDF();
+  
+const generateBill = () => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const right = pageWidth - 18;
 
-    doc.setFontSize(20);
-    doc.text("MKS CRACKERS", 105, 20, { align: "center" });
+  const orderNumber =
+    order.order_number || order.orderNumber || order.id;
 
-    doc.setFontSize(11);
-    doc.text("ESTIMATED ORDER BILL", 105, 29, {
-      align: "center",
+  const formatMoney = (value) =>
+    `Rs. ${Number(value || 0).toFixed(2)}`;
+
+  const deliveryAddress = [
+    address.address_line1,
+    address.address_line2,
+    address.landmark,
+    address.city,
+    address.state,
+    address.pincode,
+  ].filter(Boolean).join(", ");
+
+  // Branded header
+  doc.setFillColor(30, 41, 59);
+  doc.rect(0, 0, pageWidth, 43, "F");
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.text("MKS CRACKERS", 18, 19);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text("QUALITY PRODUCTS FOR EVERY CELEBRATION", 18, 27);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.text("ESTIMATED BILL", right, 19, { align: "right" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text("Order invoice", right, 27, { align: "right" });
+
+  // Order information panel
+  let y = 55;
+
+  doc.setTextColor(30, 41, 59);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("ORDER INFORMATION", 18, y);
+
+  y += 8;
+
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(16, y - 5, pageWidth - 32, 35, 3, 3, "F");
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+
+  const leftX = 21;
+  const rightX = 112;
+
+  doc.text("Order Number", leftX, y + 3);
+  doc.text(String(orderNumber || "-"), leftX, y + 10);
+
+  doc.text("Order Date", rightX, y + 3);
+  doc.text(new Date(
+    order.created_at || Date.now()
+  ).toLocaleString("en-IN"), rightX, y + 10);
+
+  doc.text("Order Status", leftX, y + 22);
+  doc.text(String(order.status || "pending").toUpperCase(), leftX + 28, y + 22);
+
+  doc.text("Payment", rightX, y + 22);
+  doc.text(
+    `${String(order.payment_method || "UPI").toUpperCase()} / ${String(order.payment_status || "PENDING").toUpperCase()}`,
+    rightX + 25,
+    y + 22
+  );
+
+  y += 43;
+
+  // Customer and delivery details
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("CUSTOMER & DELIVERY DETAILS", 18, y);
+
+  y += 8;
+
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(16, y - 5, pageWidth - 32, 37, 3, 3, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text("Customer", 21, y + 3);
+  doc.text("Mobile Number", 112, y + 3);
+
+  doc.setFont("helvetica", "normal");
+  doc.text(String(customer.name || address.name || "-"), 21, y + 11);
+  doc.text(String(customer.phone || address.phone || "-"), 112, y + 11);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Delivery Address", 21, y + 21);
+
+  doc.setFont("helvetica", "normal");
+  const addressLines = doc.splitTextToSize(
+    deliveryAddress || "Address not available",
+    165
+  );
+
+  doc.text(addressLines.slice(0, 2), 21, y + 27);
+
+  y += 47;
+
+  // Products table
+  const drawTableHeader = () => {
+    doc.setFillColor(30, 41, 59);
+    doc.rect(16, y - 5, pageWidth - 32, 11, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+
+    doc.text("PRODUCT", 20, y + 2);
+    doc.text("QTY", 120, y + 2);
+    doc.text("PRICE", 151, y + 2, { align: "right" });
+    doc.text("AMOUNT", right - 2, y + 2, { align: "right" });
+
+    y += 13;
+    doc.setTextColor(30, 41, 59);
+  };
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("ORDERED PRODUCTS", 18, y);
+
+  y += 9;
+  drawTableHeader();
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+
+  items.forEach((item, index) => {
+    const name =
+      item.product_name ||
+      item.name ||
+      item.product?.name ||
+      "Product";
+
+    const quantity = Number(item.quantity || 1);
+    const price = Number(
+      item.sale_price ?? item.price ?? 0
+    );
+
+    const amount = Number(
+      item.subtotal ?? quantity * price
+    );
+
+    const nameLines = doc.splitTextToSize(name, 88);
+    const rowHeight = Math.max(10, nameLines.length * 4 + 5);
+
+    if (y + rowHeight > 265) {
+      doc.addPage();
+      y = 20;
+      drawTableHeader();
+    }
+
+    if (index % 2 === 0) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(16, y - 4, pageWidth - 32, rowHeight, "F");
+    }
+
+    doc.text(nameLines, 20, y + 2);
+    doc.text(String(quantity), 120, y + 2);
+    doc.text(price.toFixed(2), 151, y + 2, {
+      align: "right",
     });
-
-    doc.line(15, 35, 195, 35);
-
-    doc.setFontSize(10);
-
-    let y = 45;
-
-    const line = (label, value) => {
-      doc.text(`${label}: ${String(value || "-")}`, 18, y);
-      y += 8;
-    };
-
-    line("Order Number", orderNumber);
-    line("Customer Name", customer.name);
-    line("Mobile Number", customer.phone);
-    line("Order Date", new Date().toLocaleString("en-IN"));
-    line("Order Status", order.status || "pending");
-    line("Payment Method", order.payment_method || "upi");
-    line("Payment Status", order.payment_status || "pending");
-
-    y += 4;
-    doc.text("DELIVERY ADDRESS", 18, y);
-    y += 8;
-
-    const addressLines = doc.splitTextToSize(
-      getAddress() || "Address unavailable",
-      170
-    );
-
-    doc.text(addressLines, 18, y);
-    y += addressLines.length * 6 + 8;
-
-    doc.text("ORDERED PRODUCTS", 18, y);
-    y += 9;
-
-    doc.text("Product", 18, y);
-    doc.text("Qty", 125, y);
-    doc.text("Price", 150, y);
-    doc.text("Amount", 190, y, { align: "right" });
-
-    y += 5;
-    doc.line(18, y, 192, y);
-    y += 8;
-
-    items.forEach((item) => {
-      if (y > 265) {
-        doc.addPage();
-        y = 20;
-      }
-
-      const name =
-        item.product_name ||
-        item.name ||
-        item.product?.name ||
-        "Product";
-
-      const quantity = Number(item.quantity || 1);
-      const price = Number(
-        item.sale_price ?? item.price ?? 0
-      );
-
-      const amount = quantity * price;
-
-      doc.text(
-        doc.splitTextToSize(name, 95),
-        18,
-        y
-      );
-
-      doc.text(String(quantity), 125, y);
-      doc.text(price.toFixed(2), 150, y);
-      doc.text(amount.toFixed(2), 190, y, {
-        align: "right",
-      });
-
-      y += 9;
-    });
-
-    y += 5;
-    doc.line(18, y, 192, y);
-    y += 10;
-
-    doc.text("Subtotal", 140, y);
-    doc.text(
-      formatCurrency(state?.subtotal ?? total),
-      190,
-      y,
-      { align: "right" }
-    );
-
-    y += 8;
-
-    doc.text("Shipping", 140, y);
-    doc.text(
-      formatCurrency(state?.shipping || 0),
-      190,
-      y,
-      { align: "right" }
-    );
-
-    y += 10;
-
-    doc.setFontSize(13);
-    doc.text("TOTAL AMOUNT", 130, y);
-    doc.text(formatCurrency(total), 190, y, {
+    doc.text(amount.toFixed(2), right - 2, y + 2, {
       align: "right",
     });
 
-    y += 15;
-    doc.setFontSize(9);
-    doc.text(
-      "This is an estimated bill. Final payment confirmation is subject to verification.",
-      105,
-      y,
-      { align: "center", maxWidth: 175 }
-    );
+    y += rowHeight;
+  });
 
-    return doc;
-  };
+  y += 10;
+
+  if (y > 250) {
+    doc.addPage();
+    y = 25;
+  }
+
+  // Totals panel
+  const subtotal = Number(state?.subtotal ?? total);
+  const shipping = Number(state?.shipping || 0);
+  const discount = Number(
+    order.discount_amount ?? 0
+  );
+
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(105, y - 5, 89, 42, 3, 3, "F");
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+
+  doc.text("Subtotal", 111, y + 3);
+  doc.text(formatMoney(subtotal), 188, y + 3, {
+    align: "right",
+  });
+
+  doc.text("Discount", 111, y + 12);
+  doc.text(`- ${formatMoney(discount)}`, 188, y + 12, {
+    align: "right",
+  });
+
+  doc.text("Shipping", 111, y + 21);
+  doc.text(formatMoney(shipping), 188, y + 21, {
+    align: "right",
+  });
+
+  doc.setDrawColor(203, 213, 225);
+  doc.line(111, y + 25, 188, y + 25);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("TOTAL", 111, y + 33);
+  doc.text(formatMoney(total), 188, y + 33, {
+    align: "right",
+  });
+
+  // Footer
+  y += 55;
+
+  if (y > 275) {
+    doc.addPage();
+    y = 25;
+  }
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+
+  doc.text(
+    "Thank you for shopping with MKS Crackers!",
+    pageWidth / 2,
+    y,
+    { align: "center" }
+  );
+
+  doc.text(
+    "This is an estimated bill. Payment confirmation is subject to verification.",
+    pageWidth / 2,
+    y + 6,
+    { align: "center" }
+  );
+
+  doc.setTextColor(30, 41, 59);
+
+  return doc;
+};
+
 
   const handleContinueShopping = () => {
     const doc = generateBill();
@@ -219,8 +349,18 @@ function OrderConfirmation() {
   return (
     <main className="confirmation-page">
       <section className="confirmation-card">
-        <div className="confirmation-success-icon">✓</div>
-
+        <div className="confirmation-success-animation">
+          <div className="confirmation-success-ring"></div>
+        
+          <div className="confirmation-success-icon">
+            <svg viewBox="0 0 52 52" aria-hidden="true">
+              <path
+                className="confirmation-checkmark"
+                d="M14 27 L22 35 L39 17"
+              />
+            </svg>
+          </div>
+        </div>
         <h1>Thank You for Your Order!</h1>
 
         <p className="confirmation-description">
@@ -282,7 +422,8 @@ function OrderConfirmation() {
           className="confirmation-secondary-button"
           onClick={handleContinueShopping}
         >
-          Continue Shopping & Get Estimated Bill
+          <span>📄</span>
+            Download Estimated Bill & Continue Shopping
         </button>
 
         <small className="confirmation-whatsapp-note">
