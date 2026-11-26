@@ -10,6 +10,7 @@ import homepageHeroRoutes from "./routes/homepageHeroRoutes.js";
 import homepagePromoRoutes from "./routes/homepagePromoRoutes.js";
 import adminHomepageRoutes from "./routes/adminHomepageRoutes.js";
 import adminDashboardRoutes from "./routes/adminDashboardRoutes.js";
+import adminOrderRoutes from "./routes/adminOrderRoutes.js";
 import pool from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
@@ -90,6 +91,7 @@ app.use("/api/homepage", homepageRoutes);
 app.use("/api/homepage", homepageHeroRoutes);
 app.use("/api/homepage", homepagePromoRoutes);
 app.use("/api/admin/homepage", adminHomepageRoutes);
+app.use("/api/admin/orders", adminOrderRoutes);
 
 const PORT = process.env.PORT || 5000;
 
