@@ -1,0 +1,569 @@
+/* =========================================================
+   MKS CRACKERS - GLOBAL 3D DESIGN SYSTEM
+   Premium Orange / Gold Theme
+========================================================= */
+
+:root {
+  --mk-primary: #f97316;
+  --mk-secondary: #ea580c;
+  --mk-gold: #fbbf24;
+  --mk-dark: #111827;
+
+  --mk-light: #fff7ed;
+  --mk-border: #fed7aa;
+
+  --mk-shadow: rgba(124, 45, 18, 0.12);
+  --mk-glow: rgba(249, 115, 22, 0.25);
+}
+
+/* =========================================================
+   GLOBAL SMOOTH BEHAVIOR
+========================================================= */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* =========================================================
+   3D PRIMARY BUTTONS
+========================================================= */
+
+.mk-3d-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: white;
+  background: linear-gradient(
+    135deg,
+    #fb923c,
+    #f97316,
+    #ea580c
+  );
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+
+  box-shadow:
+    0 5px 0 #9a3412,
+    0 10px 25px rgba(234, 88, 12, 0.25);
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+
+  transform: translateY(0);
+  cursor: pointer;
+  font-weight: 700;
+  overflow: hidden;
+}
+
+.mk-3d-button:hover {
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 8px 0 #9a3412,
+    0 18px 30px rgba(234, 88, 12, 0.35);
+}
+
+.mk-3d-button:active {
+  transform: translateY(3px);
+
+  box-shadow:
+    0 2px 0 #9a3412;
+}
+
+.mk-3d-button:focus-visible {
+  outline: 3px solid #fdba74;
+  outline-offset: 4px;
+}
+
+.mk-3d-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Button shine animation */
+
+.mk-3d-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+
+  width: 70%;
+  height: 100%;
+
+  background: linear-gradient(
+    110deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+
+  transform: skewX(-25deg);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.mk-3d-button:hover::before {
+  left: 150%;
+}
+
+/* =========================================================
+   LOGOUT BUTTON
+========================================================= */
+
+.mk-3d-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  color: #dc2626;
+
+  background: linear-gradient(
+    135deg,
+    #ffffff,
+    #fee2e2
+  );
+
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+
+  box-shadow:
+    0 5px 0 #fca5a5,
+    0 10px 22px rgba(220, 38, 38, 0.12);
+
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.mk-3d-logout:hover {
+  color: white;
+
+  background: linear-gradient(
+    135deg,
+    #ef4444,
+    #b91c1c
+  );
+
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 8px 0 #991b1b,
+    0 15px 25px rgba(220, 38, 38, 0.25);
+}
+
+.mk-3d-logout:active {
+  transform: translateY(2px);
+}
+
+.mk-3d-logout:focus-visible {
+  outline: 3px solid #fca5a5;
+  outline-offset: 4px;
+}
+
+/* =========================================================
+   3D MAIN CARDS
+========================================================= */
+
+.mk-3d-card {
+  position: relative;
+
+  border: 1px solid rgba(249, 115, 22, 0.12);
+  border-radius: 20px;
+
+  background: linear-gradient(
+    145deg,
+    #ffffff,
+    #fff7ed
+  );
+
+  box-shadow:
+    0 8px 25px rgba(15, 23, 42, 0.06);
+
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
+
+  transform-style: preserve-3d;
+}
+
+.mk-3d-card:hover {
+  transform:
+    perspective(1000px)
+    translateY(-5px)
+    rotateX(1deg);
+
+  box-shadow:
+    0 20px 40px rgba(15, 23, 42, 0.13);
+}
+
+/* =========================================================
+   3D LINK CARDS
+========================================================= */
+
+.mk-3d-link-card {
+  display: block;
+
+  border: 1px solid #fed7aa;
+  border-radius: 16px;
+
+  background: linear-gradient(
+    145deg,
+    #ffffff,
+    #fff7ed
+  );
+
+  box-shadow:
+    0 5px 0 #fed7aa,
+    0 10px 25px rgba(15, 23, 42, 0.06);
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+
+  transform-style: preserve-3d;
+}
+
+.mk-3d-link-card:hover {
+  transform:
+    perspective(800px)
+    translateY(-6px)
+    rotateX(2deg);
+
+  border-color: #fb923c;
+
+  box-shadow:
+    0 10px 0 #fdba74,
+    0 20px 35px rgba(249, 115, 22, 0.14);
+}
+
+.mk-3d-link-card:focus-visible {
+  outline: 3px solid #fdba74;
+  outline-offset: 4px;
+}
+
+/* =========================================================
+   PROFILE INFORMATION CARDS
+========================================================= */
+
+.mk-3d-info-card {
+  position: relative;
+
+  padding: 22px;
+
+  border: 1px solid #f3e8dc;
+  border-radius: 16px;
+
+  background: linear-gradient(
+    145deg,
+    #ffffff,
+    #fff7ed
+  );
+
+  box-shadow:
+    0 5px 15px rgba(124, 45, 18, 0.05);
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+
+  overflow-wrap: anywhere;
+}
+
+.mk-3d-info-card:hover {
+  transform: translateY(-4px);
+
+  border-color: #fed7aa;
+
+  box-shadow:
+    0 12px 25px rgba(124, 45, 18, 0.12);
+}
+
+/* =========================================================
+   GLOWING ANIMATED SECTION BACKGROUND
+========================================================= */
+
+.mk-3d-section {
+  position: relative;
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 10% 10%,
+      rgba(251, 146, 60, 0.12),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 90% 90%,
+      rgba(251, 191, 36, 0.12),
+      transparent 35%
+    ),
+    #fffaf5;
+}
+
+.mk-3d-section::before {
+  content: "";
+  position: absolute;
+
+  width: 250px;
+  height: 250px;
+
+  top: -100px;
+  right: -80px;
+
+  border-radius: 50%;
+
+  background: rgba(251, 146, 60, 0.08);
+  filter: blur(5px);
+
+  animation: mk-float 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.mk-3d-section::after {
+  content: "";
+  position: absolute;
+
+  width: 200px;
+  height: 200px;
+
+  bottom: -100px;
+  left: -60px;
+
+  border-radius: 50%;
+
+  background: rgba(251, 191, 36, 0.1);
+  filter: blur(5px);
+
+  animation: mk-float 10s ease-in-out infinite reverse;
+  pointer-events: none;
+}
+
+/* =========================================================
+   SMOOTH INPUT INTERACTION
+========================================================= */
+
+.mk-3d-input {
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+
+  background-color: #ffffff;
+}
+
+.mk-3d-input:hover {
+  border-color: #fdba74;
+}
+
+.mk-3d-input:focus {
+  outline: none;
+  border-color: #f97316;
+
+  box-shadow:
+    0 0 0 4px rgba(249, 115, 22, 0.12),
+    0 5px 15px rgba(249, 115, 22, 0.08);
+}
+
+/* =========================================================
+   PROFILE AVATAR ANIMATION
+========================================================= */
+
+.mk-3d-avatar {
+  transition:
+    transform 0.4s ease,
+    box-shadow 0.4s ease;
+}
+
+.mk-3d-avatar:hover {
+  transform: perspective(500px) rotateY(10deg) scale(1.05);
+
+  box-shadow:
+    0 12px 30px rgba(249, 115, 22, 0.25);
+}
+
+/* =========================================================
+   FLOATING ANIMATION
+========================================================= */
+
+@keyframes mk-float {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0);
+  }
+
+  50% {
+    transform: translateY(-20px) translateX(10px);
+  }
+}
+
+/* =========================================================
+   GLOW ANIMATION
+========================================================= */
+
+@keyframes mk-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 10px rgba(249, 115, 22, 0.12);
+  }
+
+  50% {
+    box-shadow:
+      0 0 25px rgba(249, 115, 22, 0.3);
+  }
+}
+
+.mk-3d-glow {
+  animation: mk-glow 3s ease-in-out infinite;
+}
+
+/* =========================================================
+   PAGE ENTRY ANIMATION
+========================================================= */
+
+@keyframes mk-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mk-3d-page-enter {
+  animation: mk-page-enter 0.6s ease-out both;
+}
+
+/* =========================================================
+   LOADING SPINNER
+========================================================= */
+
+.mk-3d-spinner {
+  width: 48px;
+  height: 48px;
+
+  border: 4px solid #fed7aa;
+  border-top-color: #ea580c;
+
+  border-radius: 50%;
+
+  animation: mk-spin 0.8s linear infinite;
+}
+
+@keyframes mk-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================================
+   PREMIUM TEXT GRADIENT
+========================================================= */
+
+.mk-3d-gradient-text {
+  background: linear-gradient(
+    135deg,
+    #ea580c,
+    #f97316,
+    #fbbf24
+  );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar {
+  width: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: #fff7ed;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    #fb923c,
+    #ea580c
+  );
+
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c2410c;
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN
+========================================================= */
+
+@media (max-width: 640px) {
+  .mk-3d-card {
+    border-radius: 16px;
+  }
+
+  .mk-3d-info-card {
+    padding: 17px;
+  }
+
+  .mk-3d-button,
+  .mk-3d-logout {
+    min-height: 44px;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION ACCESSIBILITY
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .mk-3d-card:hover,
+  .mk-3d-link-card:hover,
+  .mk-3d-info-card:hover,
+  .mk-3d-button:hover,
+  .mk-3d-logout:hover,
+  .mk-3d-avatar:hover {
+    transform: none !important;
+  }
+}

@@ -1,3 +1,5 @@
+import "./styles/3d-theme.css";
+import "./styles/landing-3d.css";
 import { Routes, Route } from "react-router-dom";
 
 import Home from "./pages/Home";
