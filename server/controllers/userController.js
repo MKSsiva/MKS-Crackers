@@ -45,16 +45,21 @@ export const updateProfile = async (req, res) => {
 
     // const phoneDigits = phone.replace(/\D/g, "");
 
-    if (!/^\+91[6-9]\d{9}$/.test(phone)) {
-  return res.status(400).json({
-    success: false,
-    message: "Enter a valid Indian mobile number in +91XXXXXXXXXX format.",
-  });
-}
+    phone = phone.trim();
+   
+     if (!/^[6-9]\d{9}$/.test(phone)) {
+       return res.status(400).json({
+         success: false,
+         message: "Enter a valid 10-digit Indian mobile number.",
+       });
+     }
+   
+     // Store with country code
+    const fullPhone = `+91${phone}`;
 
     await pool.query(
-      "UPDATE users SET name = ?, phone = ? WHERE id = ?",
-      [name, phone, userId]
+     "UPDATE users SET name = ?, phone = ? WHERE id = ?",
+     [name, fullPhone, userId]
     );
 
     const [rows] = await pool.query(

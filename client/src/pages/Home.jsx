@@ -27,6 +27,8 @@ const Home = () => {
   const [promoError, setPromoError] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadHomepage = async () => {
       try {
         setHeroLoading(true);
@@ -47,11 +49,13 @@ const Home = () => {
           getHomepagePromo(),
         ]);
 
+        if (cancelled) return;
+
         // =============================================
-        // HERO
+        // HERO CONTENT
         // =============================================
 
-        if (heroData.success && heroData.hero) {
+        if (heroData?.success && heroData.hero) {
           setHero(heroData.hero);
         } else {
           setHero(null);
@@ -63,7 +67,7 @@ const Home = () => {
         // =============================================
 
         if (
-          featuresData.success &&
+          featuresData?.success &&
           Array.isArray(featuresData.features)
         ) {
           setFeatures(featuresData.features);
@@ -73,75 +77,79 @@ const Home = () => {
         }
 
         // =============================================
-        // PROMO BANNER
+        // PROMOTIONAL BANNER
         // =============================================
 
-        if (
-          promoData.success &&
-          promoData.promo
-        ) {
+        if (promoData?.success && promoData.promo) {
           setPromo(promoData.promo);
         } else {
           setPromo(null);
           setPromoError(true);
         }
+
       } catch (error) {
-        console.error(
-          "Failed to load homepage:",
-          error
-        );
+        console.error("Failed to load homepage:", error);
 
-        setHero(null);
-        setFeatures([]);
-        setPromo(null);
+        if (!cancelled) {
+          setHero(null);
+          setFeatures([]);
+          setPromo(null);
 
-        setHeroError(true);
-        setFeaturesError(true);
-        setPromoError(true);
+          setHeroError(true);
+          setFeaturesError(true);
+          setPromoError(true);
+        }
+
       } finally {
-        setHeroLoading(false);
-        setFeaturesLoading(false);
-        setPromoLoading(false);
+        if (!cancelled) {
+          setHeroLoading(false);
+          setFeaturesLoading(false);
+          setPromoLoading(false);
+        }
       }
     };
 
     loadHomepage();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#080d20]">
+
+      {/* HEADER */}
+
       <Header />
 
-      <main>
+      <main className="mks-landing">
+
         {/* =========================================
-            HERO
+            STEP 2: PREMIUM 3D HERO
         ========================================= */}
 
         <Hero
           hero={hero}
           features={features}
-          loading={
-            heroLoading || featuresLoading
-          }
-          error={
-            heroError || featuresError
-          }
+          loading={heroLoading || featuresLoading}
+          error={heroError || featuresError}
         />
 
         {/* =========================================
-            CATEGORIES
+            STEP 3: 3D CATEGORY SHOWCASE
         ========================================= */}
 
         <CategorySection />
 
         {/* =========================================
-            PRODUCTS
+            STEP 4: 3D PRODUCT SHOWCASE
         ========================================= */}
 
         <ProductSection />
 
         {/* =========================================
-            PROMO BANNER
+            STEP 5: PREMIUM PROMOTIONAL BANNER
         ========================================= */}
 
         <PromoBanner
@@ -149,12 +157,15 @@ const Home = () => {
           loading={promoLoading}
           error={promoError}
         />
+
       </main>
 
+      {/* STEP 6: PREMIUM FOOTER */}
+
       <Footer />
+
     </div>
   );
 };
 
 export default Home;
-

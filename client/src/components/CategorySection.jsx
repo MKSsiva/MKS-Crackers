@@ -1,15 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
 import { getCategories } from "../services/api";
 
-const fallbackIcons = [
-  "✨",
-  "🪔",
-  "🚀",
-  "🎁",
-  "🎆",
-];
+const fallbackIcons = ["✨", "🪔", "🚀", "🎁", "🎆", "🌟"];
 
 const CategorySection = () => {
   const [categories, setCategories] = useState([]);
@@ -17,165 +10,116 @@ const CategorySection = () => {
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadCategories = async () => {
       try {
         setLoading(true);
         setError(false);
 
         const response = await getCategories();
+        const data = response?.data ?? response;
 
-        if (
-          response.success &&
-          Array.isArray(response.categories)
-        ) {
-          setCategories(response.categories);
-        } else {
-          setCategories([]);
-          setError(true);
+        if (!data?.success || !Array.isArray(data.categories)) {
+          throw new Error("Unable to load categories.");
         }
-      } catch (error) {
-        console.error(
-          "Failed to load categories:",
-          error
-        );
 
-        setCategories([]);
-        setError(true);
+        if (!cancelled) {
+          setCategories(data.categories);
+        }
+      } catch (err) {
+        console.error("Category loading error:", err);
+        if (!cancelled) setError(true);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     loadCategories();
+    return () => { cancelled = true; };
   }, []);
 
   return (
-    <section className="bg-white px-6 py-16">
-      <div className="mx-auto max-w-7xl">
+    <section className="relative overflow-hidden bg-[#0c1328] px-6 py-20 text-white">
+      <div className="pointer-events-none absolute -left-24 top-20 h-64 w-64 rounded-full bg-orange-500/10 blur-[90px]" />
 
-        {/* =========================================
-            SECTION HEADER
-        ========================================= */}
-
+      <div className="relative mx-auto max-w-7xl">
         <div className="mb-12 text-center">
-          <h2 className="text-3xl font-black text-[#10142d] md:text-4xl">
-            SHOP BY CATEGORY
+          <p className="text-xs font-bold uppercase tracking-[.3em] text-orange-300">
+            Find your favourites
+          </p>
+          <h2 className="mt-3 text-3xl font-black md:text-5xl">
+            SHOP BY <span className="mks-gradient-text">CATEGORY</span>
           </h2>
-
-          <div className="mx-auto mt-3 h-1 w-12 bg-red-600" />
+          <div className="mx-auto mt-4 h-1 w-16 rounded-full bg-gradient-to-r from-orange-500 to-yellow-300" />
+          <p className="mt-4 text-sm text-slate-400">
+            Explore our collection for every special occasion.
+          </p>
         </div>
 
-        {/* =========================================
-            LOADING
-        ========================================= */}
-
         {loading && (
-          <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
             {[1, 2, 3, 4, 5].map((item) => (
-              <div
-                key={item}
-                className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm"
-              >
-                <div className="h-44 animate-pulse bg-gray-100" />
-
-                <div className="space-y-3 p-5">
-                  <div className="mx-auto h-5 w-28 animate-pulse rounded bg-gray-100" />
-
-                  <div className="mx-auto h-4 w-20 animate-pulse rounded bg-gray-100" />
-                </div>
+              <div key={item} className="mks-glass overflow-hidden rounded-3xl p-4">
+                <div className="mks-shimmer h-40 rounded-2xl" />
+                <div className="mks-shimmer mx-auto mt-5 h-5 w-2/3 rounded" />
+                <div className="mks-shimmer mx-auto mt-3 h-3 w-1/2 rounded" />
               </div>
             ))}
           </div>
         )}
 
-        {/* =========================================
-            ERROR
-        ========================================= */}
-
         {!loading && error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-8 text-center">
-            <p className="font-semibold text-red-600">
-              Unable to load categories.
-            </p>
-
-            <p className="mt-1 text-sm text-red-500">
-              Please try again later.
-            </p>
+          <div className="rounded-2xl border border-red-400/20 bg-red-500/10 p-8 text-center text-red-200">
+            Unable to load categories. Please refresh the page.
           </div>
         )}
 
-        {/* =========================================
-            CATEGORIES
-        ========================================= */}
+        {!loading && !error && categories.length > 0 && (
+          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+            {categories.map((category, index) => (
+              <Link
+                key={category.id}
+                to={`/products?category=${encodeURIComponent(category.slug)}`}
+                className="mks-glass mks-3d-card group overflow-hidden rounded-3xl p-3"
+              >
+                <div className="relative flex h-40 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500/15 via-slate-800 to-yellow-500/10">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                  {category.image ? (
+                    <img
+                      src={category.image}
+                      alt={category.name}
+                      loading="lazy"
+                      className="relative h-full w-full object-cover transition duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    <span className="mks-float relative text-7xl">
+                      {fallbackIcons[index % fallbackIcons.length]}
+                    </span>
+                  )}
+                </div>
 
-        {!loading &&
-          !error &&
-          categories.length > 0 && (
-            <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                <div className="px-2 py-5 text-center">
+                  <h3 className="font-bold text-white transition group-hover:text-orange-300">
+                    {category.name}
+                  </h3>
+                  <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-orange-300">
+                    Explore collection →
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
 
-              {categories.map((category, index) => (
-                <Link
-                  key={category.id}
-                  to={`/products?category=${category.slug}`}
-                  className="group overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-xl"
-                >
-
-                  {/* Category Image */}
-                  <div className="flex h-44 items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
-
-                    {category.image ? (
-                      <img
-                        src={category.image}
-                        alt={category.name}
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
-                      />
-                    ) : (
-                      <div className="text-7xl transition duration-300 group-hover:scale-110">
-                        {fallbackIcons[
-                          index % fallbackIcons.length
-                        ]}
-                      </div>
-                    )}
-
-                  </div>
-
-                  {/* Category Information */}
-                  <div className="p-5 text-center">
-
-                    <h3 className="text-lg font-bold text-gray-800">
-                      {category.name}
-                    </h3>
-
-                    <p className="mt-2 text-sm text-gray-500">
-                      Explore Products
-                    </p>
-
-                  </div>
-
-                </Link>
-              ))}
-
-            </div>
-          )}
-
-        {/* =========================================
-            NO CATEGORIES
-        ========================================= */}
-
-        {!loading &&
-          !error &&
-          categories.length === 0 && (
-            <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-8 text-center">
-              <p className="font-semibold text-gray-600">
-                No categories available.
-              </p>
-            </div>
-          )}
-
+        {!loading && !error && categories.length === 0 && (
+          <p className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-slate-300">
+            No categories available at the moment.
+          </p>
+        )}
       </div>
     </section>
   );
 };
 
 export default CategorySection;
-

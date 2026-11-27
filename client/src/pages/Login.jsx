@@ -1,34 +1,23 @@
-
-import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import "./Login.css";
 
 const Login = () => {
-  const { login, user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { login } = useAuth();
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (!formData.email.trim() || !formData.password) {
+    if (!email.trim() || !password) {
       setError("Please enter your email and password.");
       return;
     }
@@ -36,201 +25,155 @@ const Login = () => {
     try {
       setLoading(true);
 
-      const result = await login(
-        formData.email.trim(),
-        formData.password
-      );
+      await login(email.trim(), password);
 
-      if (!result?.success) {
-        setError(result?.message || "Login failed. Please try again.");
-        return;
-      }
-
-      // Confirm the backend returned a usable JWT.
-      const token = localStorage.getItem("token");
-
-      if (!token || token === "undefined" || token === "null") {
-        setError("Login succeeded, but the server did not provide an authentication token.");
-        return;
-      }
-
-      const destination =
-        location.state?.from?.pathname || "/products";
-
-      navigate(destination, { replace: true });
+      navigate("/");
     } catch (err) {
       setError(
         err.response?.data?.message ||
         err.message ||
-        "Unable to login. Please try again."
+        "Login failed. Please check your details and try again."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // If already logged in, go to the products page.
- useEffect(() => {
-  if (user) {
-    navigate("/products", { replace: true });
-  }
-}, [user, navigate]);
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-white to-orange-50 px-4 py-10">
-      <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl md:grid-cols-2">
+    <main className="mk-login-page">
+      <div className="mk-login-background">
+        <div className="mk-glow mk-glow-one" />
+        <div className="mk-glow mk-glow-two" />
+        <div className="mk-grid-overlay" />
 
-        {/* Left panel */}
-        <div className="relative hidden flex-col justify-between overflow-hidden bg-slate-900 p-10 text-white md:flex">
-          <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-orange-500/20 blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
-
-          <div className="relative z-10">
-            <Link to="/" className="text-3xl font-extrabold tracking-wide">
-              MKS <span className="text-orange-400">Crackers</span>
-            </Link>
-            <p className="mt-3 text-sm text-slate-300">
-              Celebrate every moment with joy.
-            </p>
-          </div>
-
-          <div className="relative z-10">
-            <div className="mb-6 text-6xl">🎉</div>
-            <h2 className="text-4xl font-bold leading-tight">
-              Welcome back!
-            </h2>
-            <p className="mt-4 max-w-sm leading-7 text-slate-300">
-              Login to explore our products, manage your cart and track your
-              MKS Crackers orders.
-            </p>
-          </div>
-
-          <p className="relative z-10 text-xs text-slate-400">
-            © {new Date().getFullYear()} MKS Crackers. All rights reserved.
-          </p>
+        <div className="mk-orbit mk-orbit-one">
+          <span />
+        </div>
+        <div className="mk-orbit mk-orbit-two">
+          <span />
         </div>
 
-        {/* Login form */}
-        <div className="flex items-center justify-center p-6 sm:p-10 md:p-12">
-          <div className="w-full max-w-md">
+        <div className="mk-floating-shape mk-shape-one">✦</div>
+        <div className="mk-floating-shape mk-shape-two">◇</div>
+        <div className="mk-floating-shape mk-shape-three">✧</div>
+        <div className="mk-floating-shape mk-shape-four">+</div>
+        <div className="mk-floating-shape mk-shape-five">✦</div>
+      </div>
 
-            <Link
-              to="/"
-              className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-orange-600"
-            >
-              ← Back to Home
-            </Link>
+      <div className="mk-login-content">
+        <section className="mk-login-card">
+          <div className="mk-card-top-line" />
 
-            <div className="mb-8">
-              <p className="text-sm font-bold uppercase tracking-widest text-orange-600">
-                Customer Account
-              </p>
-              <h1 className="mt-2 text-3xl font-extrabold text-slate-900">
-                Sign in
-              </h1>
-              <p className="mt-2 text-sm text-slate-500">
-                Enter your account details to continue shopping.
-              </p>
+          <div className="mk-login-brand">
+            <div className="mk-brand-icon">
+              <span>✦</span>
             </div>
+            <div>
+              <h1>MKS CRACKERS</h1>
+              <p>LIGHT UP YOUR CELEBRATIONS</p>
+            </div>
+          </div>
 
-            {error && (
-              <div
-                role="alert"
-                className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-              >
-                {error}
-              </div>
-            )}
-{location.state?.successMessage && (
-  <div className="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-    {location.state.successMessage}
-  </div>
-)}
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="mb-2 block text-sm font-semibold text-slate-700"
-                >
-                  Email Address
-                </label>
+          <div className="mk-login-heading">
+            <span className="mk-welcome-label">
+              <span className="mk-live-dot" />
+              YOUR CELEBRATION STARTS HERE
+            </span>
 
+            <h2>
+              Welcome
+              <br />
+              <span>Back.</span>
+            </h2>
+
+            <p>Sign in to discover something spectacular.</p>
+          </div>
+
+          {error && (
+            <div className="mk-login-error" role="alert">
+              <span>!</span>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="mk-login-form">
+            <div className="mk-input-group">
+              <label htmlFor="login-email">EMAIL ADDRESS</label>
+
+              <div className="mk-input-shell">
+                <span className="mk-input-icon">✉</span>
                 <input
-                  id="email"
-                  name="email"
+                  id="login-email"
                   type="email"
+                  placeholder="Enter your email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
                   required
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Enter your email"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm outline-none transition focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-100"
                 />
               </div>
-
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-2 block text-sm font-semibold text-slate-700"
-                >
-                  Password
-                </label>
-
-                <div className="relative">
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="Enter your password"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-16 text-sm outline-none transition focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-100"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500 hover:text-orange-600"
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-5 py-3.5 font-bold text-white shadow-lg shadow-orange-600/20 transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {loading ? "Signing in..." : "Login to Your Account"}
-                {!loading && <span>→</span>}
-              </button>
-            </form>
-
-            <div className="mt-7 text-center text-sm text-slate-500">
-  Don't have an account?{" "}
-  <Link
-    to="/register"
-    className="font-semibold text-orange-600 hover:text-orange-700"
-  >
-    Create Account
-  </Link>
-</div>
-
-            <div className="mt-8 border-t border-slate-100 pt-5 text-center">
-              <Link
-                to="/admin/login"
-                className="text-xs font-medium text-slate-400 transition hover:text-slate-700"
-              >
-                Admin Login
-              </Link>
             </div>
+
+            <div className="mk-input-group">
+              <label htmlFor="login-password">PASSWORD</label>
+
+              <div className="mk-input-shell">
+                <span className="mk-input-icon">◈</span>
+                <input
+                  id="login-password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+
+                <button
+                  type="button"
+                  className="mk-password-toggle"
+                  onClick={() => setShowPassword((value) => !value)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "HIDE" : "SHOW"}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="mk-login-button"
+              disabled={loading}
+            >
+              <span>{loading ? "SIGNING IN..." : "SIGN IN"}</span>
+              <span className="mk-button-arrow">
+                {loading ? "◌" : "→"}
+              </span>
+            </button>
+          </form>
+
+          <div className="mk-login-divider">
+            <span />
+            <p>NEW TO MKS CRACKERS?</p>
+            <span />
           </div>
-        </div>
+
+          <Link to="/register" className="mk-register-link">
+            CREATE YOUR ACCOUNT <span>↗</span>
+          </Link>
+
+          <div className="mk-login-footer">
+            <span>SECURE ACCESS</span>
+            <span className="mk-footer-dot">•</span>
+            <span>MADE FOR CELEBRATIONS</span>
+          </div>
+        </section>
+
+        <p className="mk-outside-caption">
+          <span>✦</span> Every celebration deserves a little sparkle.
+        </p>
       </div>
-    </div>
+    </main>
   );
 };
 
